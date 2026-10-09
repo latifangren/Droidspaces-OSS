@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="get_started">Mulai</string>
-    <string name="root_check_title">Cek Akses Root</string>
     <string name="checking_root">Mengecek akses root...</string>
-    <string name="root_granted">Akses Root Berhasil</string>
     <string name="root_denied">Akses Root Ditolak</string>
     <string name="root_required_message">Akses Root di perlukan untuk mengelola kontainer.</string>
     <string name="check_root_access">Cek Akses Root</string>
-    <string name="check_root_access_click">Klik Dibawah ini untuk cek akses root</string>
-    <string name="root_available_message">Kamu sekarang bisa memakai Droidspaces</string>
     <string name="skip">Lewati</string>
     <string name="continue_button">Lanjut</string>
     <string name="home_title">Beranda</string>
@@ -302,7 +298,6 @@
     <string name="mask_service">Layanan mask</string>
     <string name="no_masked_services">Tidak ada layanan masked</string>
     <string name="bind_mounts">Mount Bind</string>
-    <string name="welcome_tagline">Container Linux. Native. Tanpa overhead.</string>
     <string name="feat_containers_title">Container Linux nyata</string>
     <string name="feat_containers_desc">Teknologi namespace kernel Linux yang sama dengan LXC, Podman, dan Docker. Tanpa emulasi, tanpa chroot.</string>
     <string name="feat_overhead_title">Nol overhead</string>

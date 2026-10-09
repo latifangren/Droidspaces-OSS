@@ -5,14 +5,10 @@
     <!-- Welcome Screen -->
     <string name="get_started">Inizia</string>
     <!-- Root Check Screen -->
-    <string name="root_check_title">Verifica Accesso Root</string>
     <string name="checking_root">Verifica accesso root in corso...</string>
-    <string name="root_granted">Accesso Root Concesso</string>
     <string name="root_denied">Accesso Root Negato</string>
     <string name="root_required_message">L\'accesso root è necessario per gestire i contenitori.</string>
     <string name="check_root_access">Verifica Accesso Root</string>
-    <string name="check_root_access_click">Clicca qui sotto per verificare l\'accesso root</string>
-    <string name="root_available_message">Ora puoi usare Droidspaces</string>
     <string name="skip">Salta</string>
     <string name="continue_button">Continua</string>
     <!-- Navigation -->
@@ -375,7 +371,6 @@
     <string name="export_container">Esporta il contenitore come tarball</string>
     <string name="export_container_failed">Esportazione del contenitore %1$s non riuscita</string>
     <string name="starting_export">Avvio dell\'esportazione in corso...</string>
-    <string name="welcome_tagline">Contenitori Linux. Nativi. Nessun overhead.</string>
     <string name="feat_containers_title">Contenitori Linux reali</string>
     <string name="feat_containers_desc">Stessa tecnologia di namespace del kernel di LXC, Podman e Docker. Nessuna emulazione, nessun chroot.</string>
     <string name="feat_overhead_title">Zero overhead</string>

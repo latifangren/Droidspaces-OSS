@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name" translatable="false">Droidspaces</string>
-    <string name="root_check_title">Verificatul permisiunilor de root</string>
     <string name="checking_root">Se verifică accesul permisiunilor de root...</string>
-    <string name="root_granted">Permisiunile de root au fost acordate</string>
     <string name="root_denied">Permisiunile de root nu au fost acordate</string>
     <string name="root_required_message">Permmisiunile de root sunt necesare pentru a gestiona containere.</string>
     <string name="check_root_access">Verifică accesul la root</string>
-    <string name="check_root_access_click">Apasă butonul de mai jos pentru a verifica accesul la root</string>
-    <string name="root_available_message">Poți utiliza Droidspaces</string>
     <string name="skip">Treci peste</string>
     <string name="continue_button">Continuă</string>
     <string name="home_title">Acasă</string>
@@ -279,7 +275,6 @@
     <string name="cat_networking">Categorii de configurație și modul de rețea</string>
     <string name="no_options_enabled">­Nicio opțiune suplimentară este activată</string>
     <string name="installation_setup_summary">Rezumatul instalării</string>
-    <string name="welcome_tagline">Containere Linux. Native. Fără pierderi de performanță.</string>
     <string name="feat_containers_title">Containere Linux adevărate</string>
     <string name="feat_containers_desc">Aceeași tehnologie de namespace-uri precum LXC, Podman și Docker. Fără emulare și zero chroot.</string>
     <string name="feat_overhead_title">Zero pierderi de performanță</string>

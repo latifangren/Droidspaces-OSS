@@ -10,7 +10,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.droidspaces.app.ui.util.LoadingIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LoadingIndicator
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -19,7 +20,7 @@ import kotlinx.coroutines.launch
  * [onRefresh] runs in a coroutine; the indicator stays up for at least 600 ms so a refresh
  * that returns instantly still reads as feedback instead of a flicker.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PullToRefreshWrapper(
     onRefresh: suspend () -> Unit,

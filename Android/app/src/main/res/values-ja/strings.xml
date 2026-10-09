@@ -2,13 +2,10 @@
 <resources>
     <string name="app_name" translatable="false">Droidspaces</string>
     <string name="get_started">始める</string>
-    <string name="root_check_title">ルートアクセス権限の確認</string>
     <string name="checking_root">ルートアクセス権限を確認中…</string>
-    <string name="root_granted">ルートアクセス権限が付与されました</string>
     <string name="root_denied">ルートアクセス権限が拒否されました</string>
     <string name="root_required_message">コンテナを管理するにはルート権限が必要です。</string>
     <string name="check_root_access">ルートアクセス権限を確認</string>
-    <string name="root_available_message">ドロイドスペースが利用可能になりました</string>
     <string name="skip">後で</string>
     <string name="continue_button">続ける</string>
     <string name="home_title">ホーム</string>
@@ -29,7 +26,6 @@
     <string name="root_unavailable">ルートアクセス権限が利用できません。</string>
     <string name="grant_root_message">ドロイドスペースを探求し続けるにはルートアクセス権限を付与してください！</string>
     <string name="unknown">不明</string>
-    <string name="check_root_access_click">この下をクリックしてルートアクセス権限を確認</string>
     <string name="backend_section">バックエンド</string>
     <string name="reinstall_backend">バックエンドを再インストール</string>
     <string name="reinstall_backend_description">実行可能ファイルと起動モジュールを再インストール</string>
@@ -304,7 +300,6 @@
     <string name="login_command_copied">「%1$s」というユーザの為のログイン・コマンドがコピーされました</string>
     <string name="copy_login">ログインをコピー</string>
     <string name="notification_permission_rationale">ドロイドスペースはターミナルのセッションをバックグラウンドで維持するため、永続通知の表示が必要です。これが無いと(特にサムスン電子製の機器では)Androidが予期せずターミナル・サービスを強制終了するかもしれません。</string>
-    <string name="welcome_tagline">Linuxコンテナ。ネイティブ。付加処理無し。</string>
     <string name="feat_containers_title">本物のLinuxコンテナ</string>
     <string name="feat_containers_desc">LXC、Podman、Docker同様のカーネル名前空間技術を採用しています。エミュレーションでもchrootでもありません。</string>
     <string name="feat_overhead_title">付加処理無し</string>

@@ -324,7 +324,6 @@ dependencies {
     // and the last one built against Compose 1.11; alpha20 onward needs Compose 1.12.
     implementation("androidx.compose.material3:material3:1.5.0-alpha18")
     implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.graphics:graphics-shapes:1.0.1")
 
     // Core Android
     implementation("androidx.core:core-ktx:1.12.0")

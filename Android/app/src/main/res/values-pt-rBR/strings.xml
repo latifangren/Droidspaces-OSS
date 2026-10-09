@@ -3,14 +3,10 @@
     <!-- Welcome Screen -->
     <string name="get_started">Começar</string>
     <!-- Root Check Screen -->
-    <string name="root_check_title">Verificação de Acesso Root</string>
     <string name="checking_root">Verificando acesso root…</string>
-    <string name="root_granted">Acesso Root Concedido</string>
     <string name="root_denied">Acesso Root Negado</string>
     <string name="root_required_message">O acesso root é necessário para gerenciar containers.</string>
     <string name="check_root_access">Verificar Acesso Root</string>
-    <string name="check_root_access_click">Clique abaixo para verificar o acesso root</string>
-    <string name="root_available_message">Agora você pode usar o Droidspaces</string>
     <string name="skip">Pular</string>
     <string name="continue_button">Continuar</string>
     <!-- Navigation -->

@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="get_started">ආරම්භ කරන්න</string>
-    <string name="root_check_title">Root ප්‍රවේශය පරීක්ෂා කිරීම</string>
     <string name="checking_root">Root ප්‍රවේශය පරීක්ෂා කරමින්...</string>
-    <string name="root_granted">Root ප්‍රවේශය ලැබුණි</string>
     <string name="root_denied">Root ප්‍රවේශය ප්‍රතික්ෂේප විය</string>
     <string name="root_required_message">Container කළමනාකරණය සඳහා Root ප්‍රවේශය අවශ්‍ය වේ.</string>
     <string name="check_root_access">Root ප්‍රවේශය පරීක්ෂා කරන්න</string>
-    <string name="check_root_access_click">Root ප්‍රවේශය පරීක්ෂා කිරීමට පහත ක්ලික් කරන්න</string>
-    <string name="root_available_message">ඔබට දැන් Droidspaces භාවිතා කරන්න පුළුවන්</string>
     <string name="skip">මඟ හරින්න</string>
     <string name="continue_button">ඉදිරියට යන්න</string>
     <string name="home_title">මුල් පිටුව</string>
@@ -304,7 +300,6 @@
     <string name="gpu_access_description">සම්පූර්ණ Hardware Passthrough එකක් සිදු නොකර, GPU nodes පමණක් හුදකලා වූ /dev නාමාවලියක නිර්මාණය කිරීම</string>
     <string name="symlink_integration">Droidspaces, system path එකට එකතු කරන්න</string>
     <string name="symlink_integration_description">Android root shell එක හරහා droidspaces විධානය භාවිතා කිරීමට /system/bin තුළ symlink එකක් සාදන්න. අවවාදයයි: ඔබගේ mount පද්ධතිය OverlayFS meta modules මත පදනම් වූවක් නම්, මෙය සක්‍රීය කිරීමෙන් Bootloop ඇති විය හැක. මෙම විකල්පය Magic Mount මත පදනම් වූ mount පද්ධති සඳහා පමණක් භාවිතා කරන්න (Reboot කිරීමක් අවශ්‍ය වේ)</string>
-    <string name="welcome_tagline">Linux කන්ටේනර්. ස්වදේශීය.No overhead.</string>
     <string name="feat_containers_title">සත්‍ය Linux කන්ටේනර්</string>
     <string name="feat_containers_desc">Same kernel namespace tech as LXC, Podman and Docker. No emulation, no chroot.</string>
     <string name="feat_overhead_title">Zero overhead</string>

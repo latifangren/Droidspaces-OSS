@@ -230,6 +230,18 @@ fun DroidspacesNavigation(
         fadeOut(animationSpec = AnimationUtils.mediumSpec())
     }
 
+    // Home grows in over a finished installer, backend or container, so landing there
+    // reads as arriving somewhere rather than the installer being torn away.
+    val installers = setOf(Screen.Installation.route, Screen.InstallationProgress.route)
+    val homeEnterTransition: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
+        if (initialState.destination.route in installers) {
+            scaleIn(initialScale = 0.9f, animationSpec = AnimationUtils.mediumSpec()) +
+                fadeIn(animationSpec = AnimationUtils.mediumSpec())
+        } else {
+            fadeIn(animationSpec = AnimationUtils.fastSpec())
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = initialDestination
@@ -273,9 +285,9 @@ fun DroidspacesNavigation(
         composable(
             route = Screen.Installation.route,
             enterTransition = setupEnterTransition,
-            // Continue must drop straight to Home. A fade here cross-paints the
-            // finished installer over the Home tab for 200 ms.
-            exitTransition = { ExitTransition.None }
+            // Home scales in over this screen, so the result hero has to be gone before
+            // the new screen has settled or the two cross-paint; the fast spec does that.
+            exitTransition = { fadeOut(animationSpec = AnimationUtils.fastSpec()) }
         ) {
             InstallationScreen(
                 appStateViewModel = sharedAppStateViewModel,
@@ -303,9 +315,9 @@ fun DroidspacesNavigation(
                     defaultValue = false
                 }
             ),
-            enterTransition = defaultEnterTransition,
+            enterTransition = homeEnterTransition,
             exitTransition = defaultExitTransition,
-            popEnterTransition = defaultEnterTransition,
+            popEnterTransition = homeEnterTransition,
             popExitTransition = defaultExitTransition
         ) { backStackEntry ->
             val fromInstallation = backStackEntry.arguments?.getBoolean("fromInstallation") ?: false

@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="root_check_title">检查root权限</string>
     <string name="checking_root">正在检查root权限...</string>
-    <string name="root_granted">已授予Root权限</string>
     <string name="root_denied">Root 权限被拒绝</string>
     <string name="skip">跳过</string>
     <string name="continue_button">继续</string>
@@ -48,8 +46,6 @@
     <string name="android_storage_description">挂载Android 存储</string>
     <string name="get_started">开始使用</string>
     <string name="home_title">主页</string>
-    <string name="check_root_access_click">点击下方以检查 Root 权限</string>
-    <string name="root_available_message">现在可以使用 Droidspaces</string>
     <string name="root_required_message">需要 Root 权限以管理容器。</string>
     <string name="backend_checking">后端：检查中...</string>
     <string name="backend_installed">后端：已安装</string>
@@ -368,7 +364,6 @@
     <string name="export_container">将容器导出为 tar 归档包</string>
     <string name="export_container_failed">导出容器失败 %1$s</string>
     <string name="starting_export">开始导出...</string>
-    <string name="welcome_tagline">Linux 容器。原生运行。零性能损耗。</string>
     <string name="feat_containers_title">真正的 Linux 容器</string>
     <string name="network_mode_host_short">主机</string>
     <string name="network_mode_nat_short">NAT</string>

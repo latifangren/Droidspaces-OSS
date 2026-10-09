@@ -2,14 +2,10 @@
 <resources>
     <string name="app_name" translatable="false">Droidspaces</string>
     <string name="get_started">ចាប់ផ្តើម</string>
-    <string name="root_check_title">ការពិនិត្យសិទ្ធិ Root</string>
     <string name="checking_root">កំពុងពិនិត្យសិទ្ធិ Root...</string>
-    <string name="root_granted">ទទួលបានសិទ្ធិ Root</string>
     <string name="root_denied">សិទ្ធិ Root ត្រូវបានបដិសេធ</string>
     <string name="root_required_message">តម្រូវឲ្យមានសិទ្ធិ Root ដើម្បីគ្រប់គ្រងកុងតឺន័រ។</string>
     <string name="check_root_access">ការពិនិត្យសិទ្ធិ Root</string>
-    <string name="check_root_access_click">ចុចខាងក្រោមដើម្បីពិនិត្យសិទ្ធិ Root</string>
-    <string name="root_available_message">ឥឡូវនេះ អ្នកអាចប្រើប្រាស់ Droidspaces បានហើយ</string>
     <string name="skip">រំលង</string>
     <string name="continue_button">បន្ត</string>
     <string name="home_title">ទំព័រដើម</string>
@@ -82,7 +78,6 @@
     <string name="backend_attention_required">ផ្នែកខាងក្រោយ៖ ត្រូវការចំណាត់ការ</string>
     <string name="view_logs">មើលកំណត់ហេតុ</string>
     <string name="feat_hardware_title">ទទួលបានសិទ្ធិប្រើប្រាស់ Hardware និង GPU ទាំងស្រុង</string>
-    <string name="welcome_tagline">កុងតឺន័រ Linux។ ដើម (Native)។ គ្មានការចំណាយបន្ថែម។</string>
     <string name="feat_isolation_desc">រចនាសម្ព័ន្ធ PID ឯកជន, Mount Table, Hostname, IPC, និងឋានានុក្រម Cgroup សម្រាប់កុងតឺន័រនីមួយៗ។</string>
     <string name="feat_containers_title">កុងតឺន័រ Linux ពិតប្រាកដ</string>
     <string name="feat_hardware_desc">បើកសិទ្ធិឱ្យកុងតឺន័ររបស់អ្នក ចូលប្រើប្រាស់ Hardware របស់ម៉ាស៊ីនផ្ទាល់ (GPU, សេនស័រ, USB, ឧបករណ៍ Block) ដោយផ្ទាល់។</string>

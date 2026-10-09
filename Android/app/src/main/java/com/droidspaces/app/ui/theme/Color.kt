@@ -1,8 +1,20 @@
 package com.droidspaces.app.ui.theme
 
+import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 
 val AMOLED_BLACK = Color(0xFF000000)
+
+/* Material 3 has no warning role and tertiary follows the palette, so on a green
+ * palette a warning would look like success. This is the M3 extended-colour answer:
+ * a fixed amber pair at the usual container tones (90 on light, 30 on dark), read
+ * off the scheme's own background so dark mode and AMOLED need no second hook. */
+val ColorScheme.warningContainer: Color
+    get() = if (background.luminance() < 0.5f) Color(0xFF5D4200) else Color(0xFFFFDF9E)
+
+val ColorScheme.onWarningContainer: Color
+    get() = if (background.luminance() < 0.5f) Color(0xFFFFDF9E) else Color(0xFF261A00)
 
 /**
  * Pre-defined accent color palettes for the app, mimicking Android's

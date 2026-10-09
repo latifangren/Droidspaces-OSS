@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="get_started">Começar</string>
-    <string name="root_check_title">Verificação de Acesso Root</string>
     <string name="checking_root">A verificar o acesso root…</string>
-    <string name="root_granted">Acesso Root Concedido</string>
     <string name="root_denied">Acesso Root Negado</string>
     <string name="root_required_message">O acesso root é necessário para gerir contentores.</string>
     <string name="check_root_access">Verificar o Acesso Root</string>
-    <string name="check_root_access_click">Clique abaixo para verificar o acesso root</string>
-    <string name="root_available_message">Agora pode usar o Droidspaces</string>
     <string name="skip">Pular</string>
     <string name="continue_button">Continuar</string>
     <string name="home_title">Início</string>
@@ -199,7 +195,6 @@
     <string name="requirements_check_completed_successfully">Verificação de requisitos concluída com sucesso</string>
     <string name="requirements_check_completed_with_errors">Verificação de requisitos concluída com erros</string>
     <string name="kernel_requirements_copied">Requisitos do kernel copiados para a área de transferência</string>
-    <string name="welcome_tagline">Contentores Linux. Nativo. Sem sobrecarga.</string>
     <string name="feat_containers_title">Contentores reais do Linux</string>
     <string name="feat_containers_desc">A mesma tecnologia de namespace do kernel como LXC, Podman e Docker. Sem emulação, sem chroot.</string>
     <string name="feat_overhead_title">Nenhuma sobrecarga</string>

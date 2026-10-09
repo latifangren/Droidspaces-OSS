@@ -159,7 +159,8 @@ private fun staticAmoledSchemeFor(palette: ThemePalette): ColorScheme {
         surfaceContainerHigh = AMOLED_BLACK,
         surfaceContainerHighest = AMOLED_BLACK,
         outlineVariant = p.copy(alpha = 0.25f), // Keep subtle outline for hierarchy
-        primaryContainer = p.copy(alpha = 0.2f),
+        // primaryContainer keeps the dark scheme's opaque blend: a translucent accent here
+        // let the list show through the FAB menu, and no other container role has alpha
         onPrimaryContainer = p.blend(Color.White, 0.85f)
     )
 }
@@ -203,6 +204,7 @@ fun DroidspacesTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
+        motionScheme = MotionScheme.expressive(),
         typography = Typography,
         content = content
     )

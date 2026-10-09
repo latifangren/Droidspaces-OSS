@@ -5,14 +5,10 @@
     <!-- Welcome Screen -->
     <string name="get_started">Loslegen</string>
     <!-- Root Check Screen -->
-    <string name="root_check_title">Root-Zugangsprüfung</string>
     <string name="checking_root">Überprüfe Root-Zugriff…</string>
-    <string name="root_granted">Root-Zugriff gewährt</string>
     <string name="root_denied">Root-Zugriff verweigert</string>
     <string name="root_required_message">Root-Zugriff wird benötigt, um Container zu verwalten.</string>
     <string name="check_root_access">Root-Zugriff prüfen</string>
-    <string name="check_root_access_click">Unten klicken, um Root-Zugriff zu prüfen</string>
-    <string name="root_available_message">Droidspaces kann jetzt verwendet werden</string>
     <string name="skip">Überspringen</string>
     <string name="continue_button">Weiter</string>
     <!-- Navigation -->
@@ -239,7 +235,6 @@
     <string name="requirements_check_completed_with_errors">Anforderungsprüfung mit Fehlern abgeschlossen</string>
     <string name="kernel_requirements_copied">Kernel-Anforderungen in die Zwischenablage kopiert</string>
     <string name="feat_containers_title">Echte Linux-Container</string>
-    <string name="welcome_tagline">Linux-Container. Nativ. Kein Overhead.</string>
     <string name="feat_containers_desc">Dieselbe Kernel-Namespace-Technologie wie bei LXC, Podman und Docker. Keine Emulation, kein chroot.</string>
     <string name="feat_overhead_title">Kein Overhead</string>
     <string name="feat_overhead_desc">Kommuniziert direkt mit dem Host Linux-Kernel. Kein Hypervisor, keine Virtualisierungsschicht.</string>

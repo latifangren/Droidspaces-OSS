@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="feat_unkillable_title">لا يمكن ان يوقفها اندرويد. وهذا من أساسها</string>
-    <string name="welcome_tagline">حاويات لينكس. بدون مشاكل في الأداء.</string>
     <string name="get_started">ابدأ</string>
     <string name="feat_containers_title">حاويات لينكس حقيقية</string>
     <string name="feat_containers_desc">نفس النطاق في النواة كأداة LXC, Podman و Docker. بدون محاكاة.</string>
@@ -17,14 +16,10 @@
     <string name="feat_privileged_desc">قلل طبقات الحماية مع وضع الصلاحيات الكاملة للمستخدمين المتقدمين.</string>
     <string name="feat_autoboot_title">يمكن ان تبدأ عند تشغيل الجهاز</string>
     <string name="feat_autoboot_desc">بدل تشغيل الحاويات بشكل اوتوماتيكي عند التشغيل حتي لو الشاشة مغلقة والبيانات مشفرة.</string>
-    <string name="root_check_title">التحقق صلاحيات الروت</string>
     <string name="checking_root">يتم النحقق من صلاحيات الروت...</string>
-    <string name="root_granted">صلاحيات الروت ممنوحة</string>
     <string name="root_denied">تم رفض صلاحيات الروت</string>
     <string name="root_required_message">صلاحيات الروت مطلوبة للتحكم في الحاويات.</string>
     <string name="check_root_access">تحقق من صلاحيات الروت</string>
-    <string name="check_root_access_click">أضغط للتحقق من صلاحيات الروت</string>
-    <string name="root_available_message">يمكنك الأن استخدام Droidspaces</string>
     <string name="skip">تخطي</string>
     <string name="continue_button">المتابعة</string>
     <string name="home_title">التنقل</string>

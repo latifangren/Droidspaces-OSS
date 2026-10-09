@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="root_check_title">ரூட் அணுகல் சோதனை</string>
     <string name="privileged_nocaps_desc">எந்த லினக்ச் திறன்களையும் (முழு ரூட் சக்தி) கைவிட வேண்டாம்.</string>
     <string name="storage_configuration">சேமிப்பக கட்டமைப்பு</string>
     <string name="custom_init_warning">நீங்கள் என்ன செய்கிறீர்கள் என்பது உங்களுக்குத் தெரியாவிட்டால் இதை மாற்ற வேண்டாம். தவறான init பைனரியை அமைப்பது, கொள்கலன் பூட் செய்வதைத் தடுக்கும்.</string>
@@ -42,7 +41,6 @@
     <string name="backend_installed">பின்தளம்: நிறுவப்பட்டது</string>
     <string name="feat_hardware_title">முழு வன்பொருள்/சிபியு அணுகல்</string>
     <string name="export_container">கொள்கலனை நாடாகாப்பகபந்து ஆக ஏற்றுமதி செய்யவும்</string>
-    <string name="welcome_tagline">லினக்ச் கொள்கலன்கள். பழமை. மேல்நிலை இல்லை.</string>
     <string name="storage_option">சேமிப்பு</string>
     <string name="migrate_dialog_title">ச்பார்ச் படத்திற்கு நகர்த்தவும்</string>
     <string name="cpu_usage_label">சிபியு பயன்பாடு</string>
@@ -147,7 +145,6 @@
     <string name="install_container_description">கீழே உள்ள பொத்தானைப் பயன்படுத்தி கொள்கலனை நிறுவவும்</string>
     <string name="enabled_legend">இயக்கப்பட்டது</string>
     <string name="available_users">கிடைக்கும் பயனர்கள்</string>
-    <string name="root_granted">ரூட் அணுகல் வழங்கப்பட்டது</string>
     <string name="port_forwarding">துறைமுகம் பகிர்தல்</string>
     <string name="openrc_services">OpenRC சேவைகள்</string>
     <string name="virgl_option">விர்சிஎல்</string>
@@ -170,7 +167,6 @@
     <string name="filter_absolute_path_hint">முழுமையான பாதையை வடிகட்டவும் அல்லது தட்டச்சு செய்யவும்…</string>
     <string name="error_gateway_name_chars">எழுத்துக்கள், இலக்கங்கள், _ அல்லது - ஆகியவற்றை மட்டும் பயன்படுத்தவும்</string>
     <string name="network_mode_host_short">விருந்தோம்பி</string>
-    <string name="root_available_message">நீங்கள் இப்போது Droidspaces ஐப் பயன்படுத்தலாம்</string>
     <string name="repo_dl_error_http_data">HTTP தரவு பிழை</string>
     <string name="uninstall_container_message">இது \"%1$s\" கண்டெய்னரையும் அதன் எல்லா தரவையும் நிரந்தரமாக நீக்கும். இந்தச் செயலைச் செயல்தவிர்க்க முடியாது. \n\nகொள்கலன் இயங்கினால், அது முதலில் நிறுத்தப்படும்.</string>
     <string name="gateway_iface_explain">இந்த இணைப்பின் இடைமுகப் பெயர் கேட்வே கொள்கலனின் உள்ளே (எ.கா. OpenWRT இல் eth1) எனக் காட்டுகிறது. இது DHCP இல் பணி செய்ய உங்கள் நுழைவாயில் அமைக்கப்பட்ட இடைமுகத்துடன் பொருந்த வேண்டும். ஒரே நுழைவாயிலில் உள்ள ஒவ்வொரு தனிப் பிரிவுக்கும் அதன் சொந்தப் பெயர் தேவை. இயல்புநிலை: eth1.</string>
@@ -189,7 +185,6 @@
     <string name="maximum_size_512gb">அதிகபட்ச அளவு 512 சிபி</string>
     <string name="container_name_label">கொள்கலன் பெயர் *</string>
     <string name="appearance_section">தோற்றம்</string>
-    <string name="check_root_access_click">ரூட் அணுகலை சரிபார்க்க கீழே சொடுக்கு செய்யவும்</string>
     <string name="error_hostname_invalid">ஓச்ட்பெயரில் எழுத்துக்கள், எண்கள் மற்றும் கோடுகள் மட்டுமே இருக்க வேண்டும் (-)</string>
     <string name="error_port_out_of_range">துறைமுகங்கள் 1-65535 ஆக இருக்க வேண்டும்</string>
     <string name="uptime">இயக்க நேரம்</string>

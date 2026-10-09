@@ -82,6 +82,7 @@ invent a parallel vocabulary.
 | --- | --- |
 | Running, healthy, start action | `primary` |
 | Stopped, failed, destructive, stop action | `error` |
+| Done with a caveat, warning | `warningContainer`, an extended colour in `ui/theme/Color.kt` |
 | Restart action | `secondary` |
 | In progress, restarting, downloading | `tertiary` |
 | Idle, unknown, nothing to report | `onSurfaceVariant` at `0.6f` |
@@ -300,11 +301,26 @@ is centred inside a card, it is probably wrong.
 ## Motion and loading
 
 Spinners come from `LoadingIndicator` with a `LoadingSize`, never a raw `.size(n.dp)` on a
-progress indicator. Whole screen loading is `FullScreenLoading`. `LoadingSize.Hero` (96) is
-the one setup-flow hero loader, used by the backend installer; the empty-state icon stays 64.
+progress indicator. Whole screen loading is `FullScreenLoading`. `LoadingSize.Hero` (144) is
+the one setup-flow hero loader; the empty-state icon stays 64.
 Animation timings come from `AnimationUtils`.
-Hero state changes use the Material Expressive spring tokens: spatial 0.8 / 380 for
-size and position, effects 1.0 / 1600 for fades. Never `DampingRatioMediumBouncy` on a result.
+Hero state changes use `MaterialTheme.motionScheme`, which the theme sets to
+`MotionScheme.expressive()`: `defaultSpatialSpec()` for size and position, `defaultEffectsSpec()`
+for fades, `slowEffectsSpec()` for a result line fading in. Never hand-type a spring, and never
+`DampingRatioMediumBouncy` on a result.
+
+### The setup flow
+
+Welcome, the feature pager, the root check and the backend installer share one geometry, and
+it lives in `ui/component/SetupHero.kt`. `SetupPage` is the skeleton under the Scaffold: a 40dp
+row above, the frame slot that centres its content or scrolls when the window is too short, and
+a 44dp row below. `SetupFrame` is the frame: a 240dp hero box, then the title and the copy in a
+fixed text block. `SetupHero` is the hero of a screen that does work, a 240dp
+`MaterialShapes.Cookie12Sided` in `primaryContainer`, `warningContainer` or `errorContainer`
+holding the loader or a 96dp glyph, and only its colour and content change between states.
+`SetupActionBar` is the one button: a full pill with no bar surface and no divider, which is a
+decided exception to the 20dp bar button below. Build a new setup screen out of these and the
+hero, the title and the button land on the same rows as every other.
 
 ## When the rule does not fit
 
@@ -333,8 +349,11 @@ misses.
 - **The terminal virtual keys background** (`ui/screen/ContainerTerminalScreen.kt`) stays a
   literal. It sits against the terminal's own black, which does not follow the app theme, so a
   surface role would give a light strip under a dark terminal.
-- **The root check button's disabled colours** (`ui/screen/RootCheckScreen.kt`) stay equal to
-  its enabled colours. It is disabled only while a check is in flight, and greying it out for
+- **The setup flow's button** (`SetupActionBar` in `ui/component/SetupHero.kt`) is a full pill
+  with no bar surface and no divider, not the 20dp bar button. It sits alone on the background
+  under a hero rather than over scrolling content, and the pill is the Expressive button shape
+  the welcome pages are built around. Its disabled colours also stay equal to its enabled
+  colours: it is disabled only while a check or an install is in flight, and greying it out for
   that moment reads as a flicker.
 - **The unit detail and override editor titles** keep a smaller style than every other screen
   title. Both display systemd unit names, which are long, so `titleLarge` would only ellipsize

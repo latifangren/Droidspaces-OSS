@@ -4,8 +4,11 @@
     <string name="app_name">Droidspaces</string>
 
     <!-- Welcome Screen -->
-    <string name="welcome_tagline">Linux containers. Native. No overhead.</string>
+    <string name="welcome_headline">Real Linux on your phone</string>
+    <string name="welcome_body">Droidspaces runs full distributions in containers on your device\'s own kernel. No emulator, no virtual machine.</string>
     <string name="get_started">Get Started</string>
+    <string name="next">Next</string>
+    <string name="page_counter">%1$d of %2$d</string>
     <!-- Welcome feature cards -->
     <string name="feat_containers_title">Real Linux containers</string>
     <string name="feat_containers_desc">Same kernel namespace tech as LXC, Podman and Docker. No emulation, no chroot.</string>
@@ -25,14 +28,12 @@
     <string name="feat_autoboot_desc">Automatically start containers on boot, even if the screen is locked and data is encrypted.</string>
 
     <!-- Root Check Screen -->
-    <string name="root_check_title">Root Access Check</string>
+    <string name="root_access_title">Root access</string>
     <string name="checking_root">Checking root access...</string>
-    <string name="root_granted">Root Access Granted</string>
     <string name="root_denied">Root Access Denied</string>
     <string name="root_required_message">Root access is required to manage containers.</string>
     <string name="check_root_access">Check Root Access</string>
-    <string name="check_root_access_click">Click below to check root access</string>
-    <string name="root_available_message">You can now use Droidspaces</string>
+    <string name="root_access_body">Droidspaces needs root to create containers. Your root manager will ask you to allow it.</string>
     <string name="skip">Skip</string>
     <string name="continue_button">Continue</string>
 
@@ -396,6 +397,7 @@
     <string name="installation_failed">Installation Failed</string>
     <string name="done">Done</string>
     <string name="installing_droidspaces">Installing Droidspaces</string>
+    <string name="installing_backend_message">Setting up the backend. This takes a moment.</string>
     <string name="backend_installed_success">Droidspaces backend installed successfully</string>
     <string name="backend_installed_unsupported_kernel">Droidspaces backend installed successfully, but this kernel has no Droidspaces support.</string>
     <string name="module_installation_failed">Module installation failed</string>

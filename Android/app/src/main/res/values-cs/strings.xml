@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="welcome_tagline">Linuxové kontejnery. Nativně. Bez režie.</string>
     <string name="get_started">Začít</string>
     <string name="feat_containers_title">Skutečné linuxové kontejnery</string>
     <string name="feat_containers_desc">Stejná technologie jmenných prostorů jádra jako u LXC, Podmanu a Dockeru. Bez emulace a bez chrootu.</string>
@@ -18,14 +17,10 @@
     <string name="feat_privileged_desc">Pro pokročilé uživatele umožňuje v privilegovaném režimu uvolnit bezpečnostní omezení.</string>
     <string name="feat_autoboot_title">Automatické spuštění při startu</string>
     <string name="feat_autoboot_desc">Automaticky spustí kontejnery při startu, i když je obrazovka zamknutá a data zašifrovaná.</string>
-    <string name="root_check_title">Kontrola přístupu roota</string>
     <string name="checking_root">Kontroluje se přístup roota...</string>
-    <string name="root_granted">Přístup roota udělen</string>
     <string name="root_denied">Přístup roota odepřen</string>
     <string name="root_required_message">Ke správě kontejnerů je vyžadován přístup roota.</string>
     <string name="check_root_access">Zkontrolovat přístup roota</string>
-    <string name="check_root_access_click">Klepnutím níže zkontrolujte přístup roota</string>
-    <string name="root_available_message">Nyní můžete používat Droidspaces</string>
     <string name="skip">Přeskočit</string>
     <string name="continue_button">Pokračovat</string>
     <string name="home_title">Domů</string>
