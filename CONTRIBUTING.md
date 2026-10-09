@@ -455,7 +455,7 @@ validation. Prefer the wrappers.
 | `BinaryInstaller` / `InstallationStep` | `util/BinaryInstaller.kt` | Installing the backend binary and signalling the daemon |
 | `ModuleInstaller` / `ModuleInstallationStep` | `util/ModuleInstaller.kt` | Installing the Magisk module |
 | `SymlinkInstaller` | `util/SymlinkInstaller.kt` | Enabling and disabling the binary symlink |
-| `FilePickerUtils`, `IconUtils` | `util/` | File name resolution, distro icon lookup. |
+| `FilePickerUtils`, `IconUtils` | `util/` | File name resolution, distro icon lookup. `FilePickerUtils.realPath(context, uri)` turns a picked document into a path root can read or write in place, null for pipe-backed providers |
 
 ### C backend: logging
 

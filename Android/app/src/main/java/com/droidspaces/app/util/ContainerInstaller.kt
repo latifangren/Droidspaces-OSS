@@ -107,14 +107,17 @@ object ContainerInstaller {
                 createdPaths.add(rootfsParent)
             }
 
-            // Step 4: Copy tarball to temp location
-            logger.i("Copying tarball to temporary location...")
-            val copy = File("${context.cacheDir}/container_${sanitizedName}.tar${getTarballExtension(context, tarballUri)}")
-            tempTarball = copy
-            context.contentResolver.openInputStream(tarballUri)?.use { input ->
-                FileOutputStream(copy).use { input.copyTo(it) }
-            } ?: throw Exception("Failed to open tarball input stream")
-            val archive = copy.absolutePath
+            // Step 4: Read the tarball where it lies. Only a provider that hands out a
+            // pipe (cloud storage) still costs a full copy through cacheDir.
+            val archive = FilePickerUtils.realPath(context, tarballUri) ?: run {
+                logger.i("Copying tarball to temporary location...")
+                val copy = File("${context.cacheDir}/container_${sanitizedName}.tar${getTarballExtension(context, tarballUri)}")
+                tempTarball = copy
+                context.contentResolver.openInputStream(tarballUri)?.use { input ->
+                    FileOutputStream(copy).use { input.copyTo(it) }
+                } ?: throw Exception("Failed to open tarball input stream")
+                copy.absolutePath
+            }
             logger.i("Tarball: $archive")
 
             // Step 4.5: Verify the tarball is actually a Linux rootfs before we
@@ -239,7 +242,7 @@ object ContainerInstaller {
 
             Result.failure(e)
         } finally {
-            // Clean up temp tarball
+            // Clean up temp tarball, never the user's own file
             try {
                 tempTarball?.delete()
             } catch (e: Exception) {
