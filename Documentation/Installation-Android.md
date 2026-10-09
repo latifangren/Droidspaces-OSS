@@ -77,8 +77,8 @@ the default configuration wizard. It does not search later entries.
 The new container name and storage location come from the wizard. Environment files
 are not imported. Bind mounts use the existing
 `bind_mounts=source:destination[:ro],...` format and can be reviewed in the wizard.
-A requested user-namespace setting stays checked but disabled when the kernel does
-not support it. The rootfs itself is not modified during export.
+The `container.config` member is never extracted into the new rootfs. The rootfs
+itself is not modified during export.
 
 > [!NOTE]
 >

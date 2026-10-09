@@ -9,7 +9,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.droidspaces.app.R
 import com.droidspaces.app.util.ContainerInfo
-import com.droidspaces.app.util.ContainerInstaller
 import com.droidspaces.app.util.ContainerManager
 import com.droidspaces.app.util.ContainerStatus
 import com.droidspaces.app.util.Constants
@@ -24,17 +23,13 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 
 class ContainerInstallationViewModel : ViewModel() {
     var tarballUri: Uri? by mutableStateOf(null)
         private set
 
-    var preparedTarball: File? = null
-        private set
-    var preparingTarball by mutableStateOf(true)
-        private set
-    var preparationError: String? by mutableStateOf(null)
+    /** True until the archive has been checked for a container.config to prefill from. */
+    var readingRecommendation by mutableStateOf(true)
         private set
     var recommendationNotice: String? by mutableStateOf(null)
         private set
@@ -73,37 +68,25 @@ class ContainerInstallationViewModel : ViewModel() {
         val appContext = context.applicationContext
         viewModelScope.launch {
             try {
-                val extension = ContainerInstaller.getTarballExtension(appContext, uri)
-                val archive = File.createTempFile("rootfs_", ".tar$extension", appContext.cacheDir)
-                preparedTarball = archive
-                ContainerInstaller.copyTarball(appContext, uri, archive)
-                try {
-                    val recommended = withContext(Dispatchers.IO) { RootfsConfig.read(archive) }
-                    if (recommended != null) {
-                        containerName = ValidationUtils.normalizeContainerName(recommended.name)
-                        hostname = recommended.hostname
-                        useSparseImage = recommended.useSparseImage
-                        sparseImageSizeGB = recommended.sparseImageSizeGB ?: 8
-                        val state = recommended.toConfigState().let { HostCapabilities.state.value?.coerce(it) ?: it }
-                        recommendedHwAccess = state.enableHwAccess
-                        recommendedPrivileged = state.privileged
-                        // These two settings keep the same confirmation gates as manual setup.
-                        configState = state.copy(enableHwAccess = false, privileged = "")
-                        recommendationNotice = appContext.getString(R.string.rootfs_config_loaded)
-                    }
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    recommendationNotice = appContext.getString(R.string.rootfs_config_invalid, e.message.orEmpty())
+                val recommended = withContext(Dispatchers.IO) { RootfsConfig.read(appContext, uri) }
+                if (recommended != null) {
+                    containerName = ValidationUtils.normalizeContainerName(recommended.name)
+                    hostname = recommended.hostname
+                    useSparseImage = recommended.useSparseImage
+                    sparseImageSizeGB = recommended.sparseImageSizeGB ?: 8
+                    val state = recommended.toConfigState().let { HostCapabilities.state.value?.coerce(it) ?: it }
+                    recommendedHwAccess = state.enableHwAccess
+                    recommendedPrivileged = state.privileged
+                    // These two settings keep the same confirmation gates as manual setup.
+                    configState = state.copy(enableHwAccess = false, privileged = "")
+                    recommendationNotice = appContext.getString(R.string.rootfs_config_loaded)
                 }
             } catch (e: CancellationException) {
-                preparedTarball?.delete()
                 throw e
             } catch (e: Exception) {
-                preparationError = e.message ?: appContext.getString(R.string.operation_failed_title)
-                preparedTarball?.delete()
+                recommendationNotice = appContext.getString(R.string.rootfs_config_invalid, e.message.orEmpty())
             } finally {
-                preparingTarball = false
+                readingRecommendation = false
             }
         }
     }
@@ -152,11 +135,8 @@ class ContainerInstallationViewModel : ViewModel() {
     }
 
     fun reset() {
-        preparedTarball?.delete()
-        preparedTarball = null
         tarballUri = null
-        preparingTarball = true
-        preparationError = null
+        readingRecommendation = true
         recommendationNotice = null
         recommendedHwAccess = false
         recommendedPrivileged = ""
@@ -167,9 +147,5 @@ class ContainerInstallationViewModel : ViewModel() {
         storageDir = null
         configState = ContainerConfigState()
     }
-
-    override fun onCleared() {
-        preparedTarball?.delete()
-        super.onCleared()
-    }
 }
+

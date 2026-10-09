@@ -27,7 +27,6 @@ import com.droidspaces.app.util.ContainerLogger
 import com.droidspaces.app.util.FilePickerUtils
 import com.droidspaces.app.util.ViewModelLogger
 import kotlinx.coroutines.launch
-import java.io.File
 
 enum class InstallationState {
     INSTALLING,
@@ -40,7 +39,6 @@ enum class InstallationState {
 fun InstallationProgressScreen(
     tarballUri: Uri,
     config: ContainerInfo,
-    preparedTarball: File? = null,
     onSuccess: () -> Unit,
     onError: () -> Unit
 ) {
@@ -82,8 +80,7 @@ fun InstallationProgressScreen(
                 context = context,
                 tarballUri = tarballUri,
                 config = config,
-                logger = logger,
-                preparedTarball = preparedTarball
+                logger = logger
             )
 
             installationState = if (result.isSuccess) {
@@ -209,3 +206,4 @@ fun InstallationProgressScreen(
         }
     }
 }
+

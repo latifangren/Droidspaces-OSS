@@ -5,8 +5,6 @@ import android.net.Uri
 import com.topjohnwu.superuser.Shell
 import com.topjohnwu.superuser.io.SuFile
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
@@ -28,8 +26,7 @@ object ContainerInstaller {
         context: Context,
         tarballUri: Uri,
         config: ContainerInfo,
-        logger: ContainerLogger,
-        preparedTarball: File? = null
+        logger: ContainerLogger
     ): Result<Unit> = withContext(Dispatchers.IO) {
         // Use sanitized name for directory (spaces -> dashes)
         val sanitizedName = ContainerManager.sanitizeContainerName(config.name)
@@ -42,7 +39,7 @@ object ContainerInstaller {
         val isExternal = rootfsParent != containerPath
         val configFilePath = "$containerPath/${Constants.CONTAINER_CONFIG_FILE}"
         var createdPaths = mutableListOf<String>()
-        var tempTarball = preparedTarball
+        var tempTarball: File? = null
 
         try {
             // Reject control chars in single-line config values.
@@ -110,16 +107,15 @@ object ContainerInstaller {
                 createdPaths.add(rootfsParent)
             }
 
-            // Reuse the wizard's snapshot so the settings and payload come from the same archive.
-            logger.i("Preparing installation archive...")
-            val archive = tempTarball ?: File.createTempFile(
-                "rootfs_", ".tar${getTarballExtension(context, tarballUri)}", context.cacheDir
-            ).also {
-                tempTarball = it
-                copyTarball(context, tarballUri, it)
-            }
-
-            logger.i("Tarball ready: ${archive.absolutePath}")
+            // Step 4: Copy tarball to temp location
+            logger.i("Copying tarball to temporary location...")
+            val copy = File("${context.cacheDir}/container_${sanitizedName}.tar${getTarballExtension(context, tarballUri)}")
+            tempTarball = copy
+            context.contentResolver.openInputStream(tarballUri)?.use { input ->
+                FileOutputStream(copy).use { input.copyTo(it) }
+            } ?: throw Exception("Failed to open tarball input stream")
+            val archive = copy.absolutePath
+            logger.i("Tarball: $archive")
 
             // Step 4.5: Verify the tarball is actually a Linux rootfs before we
             // extract anything, so users can't install arbitrary archives.
@@ -145,14 +141,7 @@ object ContainerInstaller {
                 }
 
                 logger.i("Extracting tarball to $rootfsPath...")
-                val isXz = archive.name.lowercase().endsWith(".xz")
-                val extractCmd = if (isXz) {
-                    "cd ${quote(rootfsPath)} && $BUSYBOX_PATH xzcat ${quote(archive.absolutePath)} | $BUSYBOX_PATH tar -xpf - 2>&1"
-                } else {
-                    "cd ${quote(rootfsPath)} && $BUSYBOX_PATH tar -xzpf ${quote(archive.absolutePath)} 2>&1"
-                }
-
-                val extractResult = Shell.cmd(extractCmd).exec()
+                val extractResult = Shell.cmd(extractCommand(archive, rootfsPath)).exec()
                 if (!extractResult.isSuccess) {
                     val errorMsg = extractResult.err.joinToString("\n")
                     logger.e("Extraction failed: $errorMsg")
@@ -263,7 +252,7 @@ object ContainerInstaller {
      * Get the tarball extension (.xz or .gz) from the URI.
      * Uses FilePickerUtils.getFileName() to reliably get the filename even for recent files.
      */
-    internal suspend fun getTarballExtension(context: Context, uri: Uri): String = withContext(Dispatchers.IO) {
+    private suspend fun getTarballExtension(context: Context, uri: Uri): String = withContext(Dispatchers.IO) {
         // First, try to get the filename using FilePickerUtils (handles content URIs)
         val fileName = FilePickerUtils.getFileName(context, uri)
 
@@ -288,18 +277,19 @@ object ContainerInstaller {
         }
     }
 
-    internal suspend fun copyTarball(context: Context, uri: Uri, destination: File) = withContext(Dispatchers.IO) {
-        context.contentResolver.openInputStream(uri)?.use { input ->
-            destination.outputStream().use { output ->
-                val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-                while (true) {
-                    currentCoroutineContext().ensureActive()
-                    val count = input.read(buffer)
-                    if (count < 0) break
-                    output.write(buffer, 0, count)
-                }
-            }
-        } ?: throw Exception("Failed to open tarball input stream")
+    /**
+     * Shell command that unpacks [tarball] into [destination]. An exported archive
+     * carries its host config as the first member. That file is for the wizard, and
+     * extracting it would leave the old host's settings lying in the guest's root.
+     */
+    internal fun extractCommand(tarball: String, destination: String): String {
+        val skip = "--exclude=${Constants.CONTAINER_CONFIG_FILE} --exclude=./${Constants.CONTAINER_CONFIG_FILE}"
+        val unpack = if (tarball.lowercase().endsWith(".xz")) {
+            "$BUSYBOX_PATH xzcat ${quote(tarball)} | $BUSYBOX_PATH tar -xpf - $skip"
+        } else {
+            "$BUSYBOX_PATH tar -xzpf ${quote(tarball)} $skip"
+        }
+        return "cd ${quote(destination)} && $unpack 2>&1"
     }
 
 
@@ -312,7 +302,7 @@ object ContainerInstaller {
      */
     private suspend fun validateRootfsTarball(
         context: Context,
-        tarball: File,
+        tarball: String,
         logger: ContainerLogger
     ) {
         logger.i("Inspecting tarball to verify it is a Linux rootfs...")
@@ -342,7 +332,7 @@ object ContainerInstaller {
             }
 
             val result = Shell.cmd(
-                "BUSYBOX_PATH=$BUSYBOX_PATH ${quote(scriptFile.absolutePath)} ${quote(tarball.absolutePath)} 2>&1"
+                "BUSYBOX_PATH=$BUSYBOX_PATH ${quote(scriptFile.absolutePath)} ${quote(tarball)} 2>&1"
             ).exec()
 
             if (!result.isSuccess) {
@@ -447,3 +437,4 @@ object ContainerInstaller {
         }
     }
 }
+

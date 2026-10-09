@@ -52,7 +52,6 @@ import androidx.compose.ui.Modifier
 import com.droidspaces.app.ui.util.LoadingIndicator
 import com.droidspaces.app.ui.util.LoadingSize
 import com.droidspaces.app.ui.util.FullScreenLoading
-import com.droidspaces.app.ui.util.ErrorLogsDialog
 import com.droidspaces.app.ui.component.HardwareAccessDialog
 import com.droidspaces.app.ui.component.PrivilegedModeDialog
 import com.droidspaces.app.R
@@ -372,10 +371,10 @@ fun DroidspacesNavigation(
                 viewModel.setTarball(context, tarballUri)
             }
 
-            if (viewModel.preparingTarball) {
+            // ContainerNameScreen only reads its initial values once, so hold it until
+            // the archive has been checked for settings to prefill.
+            if (viewModel.readingRecommendation) {
                 FullScreenLoading(context.getString(R.string.rootfs_config_loading))
-            } else if (viewModel.preparationError != null) {
-                ErrorLogsDialog(listOf(viewModel.preparationError.orEmpty())) { navController.popBackStack() }
             } else {
                 if (viewModel.recommendedHwAccess) {
                     HardwareAccessDialog(
@@ -506,7 +505,6 @@ fun DroidspacesNavigation(
                 InstallationProgressScreen(
                     tarballUri = tarballUri,
                     config = config,
-                    preparedTarball = viewModel.preparedTarball,
                     onSuccess = {
                         viewModel.reset()
                         // Trigger container list refresh before navigating back

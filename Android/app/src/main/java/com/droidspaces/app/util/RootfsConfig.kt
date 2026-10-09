@@ -1,34 +1,45 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 package com.droidspaces.app.util
 
+import android.content.Context
+import android.net.Uri
 import com.topjohnwu.superuser.Shell
 import java.io.File
 
 /** Reads the optional container.config using the existing container config parser. */
 object RootfsConfig {
-    fun read(tarball: File): ContainerInfo? {
+    // Export writes the config as the first member, so it decodes from the first few
+    // KB. Peeking a prefix keeps the wizard instant and works for pipe-backed providers.
+    // ponytail: a config placed past the first 64 KiB is ignored, exports never do that
+    private const val PEEK_BYTES = 64 * 1024
+
+    fun read(context: Context, uri: Uri): ContainerInfo? {
+        val head = ByteArray(PEEK_BYTES)
+        var size = 0
+        context.contentResolver.openInputStream(uri)?.use { input ->
+            while (size < head.size) {
+                val n = input.read(head, size, head.size - size)
+                if (n < 0) break
+                size += n
+            }
+        } ?: throw Exception("Failed to open tarball input stream")
+
+        // Sniff the format instead of trusting the file name.
+        val xz = size > 5 && head[0] == 0xFD.toByte() && String(head, 1, 4) == "7zXZ"
         val bb = Constants.BUSYBOX_BINARY_PATH
-        val decompress = if (tarball.name.endsWith(".xz")) "xzcat" else "zcat"
-        val input = "$bb $decompress ${ContainerCommandBuilder.quote(tarball.absolutePath)}"
-        // Ordinary rootfs archives should open the default wizard without a full scan.
-        val first = Shell.cmd(
-            "$input 2>/dev/null | $bb head -c 512 | " +
-                "$bb tar -tvf - container.config ./container.config 2>/dev/null"
-        ).exec().out
-        val entry = first.firstNotNullOfOrNull {
-            Regex("^-[rwxStTs-]{9}\\s+\\S+\\s+(\\d+)\\s+\\S+\\s+\\S+\\s+(\\./)?container\\.config$")
-                .matchEntire(it)
-        } ?: return null
-        val size = entry.groupValues[1].toLongOrNull() ?: return null
-        val member = entry.groupValues[2] + Constants.CONTAINER_CONFIG_FILE
-        // Closing the prefix reader gives the decompressor SIGPIPE, which is expected.
-        val source =
-            "(set +o pipefail; $input 2>/dev/null | $bb head -c ${512 + ((size + 511) / 512) * 512})"
-        val result = Shell.cmd(
-            "(set -o pipefail; $source | $bb tar -xOf - ${ContainerCommandBuilder.quote(member)} 2>/dev/null)"
-        ).exec()
-        check(result.isSuccess) { "Could not read recommended configuration" }
-        return parse(result.out.joinToString("\n"))
+        val peek = File.createTempFile("rootfs_peek", null, context.cacheDir)
+        try {
+            peek.writeBytes(head.copyOf(size))
+            // The prefix ends mid-stream, so both tools exit non-zero after printing
+            // the member. Its output is the answer, the exit code is not.
+            val out = Shell.cmd(
+                "$bb ${if (xz) "xzcat" else "zcat"} ${ContainerCommandBuilder.quote(peek.absolutePath)} 2>/dev/null | " +
+                    "$bb tar -xOf - container.config ./container.config 2>/dev/null"
+            ).exec().out
+            return if (out.isEmpty()) null else parse(out.joinToString("\n"))
+        } finally {
+            peek.delete()
+        }
     }
 
     internal fun parse(content: String): ContainerInfo? {
