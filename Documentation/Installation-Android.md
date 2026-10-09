@@ -64,9 +64,10 @@ If you already have a `.tar.xz` or `.tar.gz` rootfs file on the device:
 An archive can include a regular `container.config` file at its root, alongside `bin/`,
 `etc/` and `usr/`. The app reads its usual `key=value` settings and prefills the wizard.
 The file may contain the complete config from an installed container or only the settings
-you want to recommend. Missing settings use the wizard defaults. You can
-change the loaded values before installing; hardware access and privileged mode keep
-their confirmation dialogs. Recommendations use the existing config parser without
+you want to recommend. Missing settings use the wizard defaults. Every setting in the
+file is applied, hardware access and privileged mode included, so the wizard shows a
+warning page before the configuration page. Review it there and change anything you do
+not want before installing. Recommendations use the existing config parser without
 additional field filtering. Rootfs validation still runs before extraction.
 
 Exporting a container includes its current host-side `container.config` as the first

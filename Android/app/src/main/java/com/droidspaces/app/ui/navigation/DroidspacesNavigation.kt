@@ -29,6 +29,7 @@ import com.droidspaces.app.ui.screen.AutoBootPriorityScreen
 import com.droidspaces.app.ui.screen.TerminalAppearanceScreen
 import com.droidspaces.app.ui.screen.WelcomeScreen
 import com.droidspaces.app.ui.screen.ContainerNameScreen
+import com.droidspaces.app.ui.screen.RecommendedConfigScreen
 import com.droidspaces.app.ui.screen.SparseImageConfigScreen
 import com.droidspaces.app.ui.screen.ContainerConfigScreen
 import com.droidspaces.app.ui.screen.InstallationSummaryScreen
@@ -52,8 +53,6 @@ import androidx.compose.ui.Modifier
 import com.droidspaces.app.ui.util.LoadingIndicator
 import com.droidspaces.app.ui.util.LoadingSize
 import com.droidspaces.app.ui.util.FullScreenLoading
-import com.droidspaces.app.ui.component.HardwareAccessDialog
-import com.droidspaces.app.ui.component.PrivilegedModeDialog
 import com.droidspaces.app.R
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.droidspaces.app.ui.viewmodel.AppStateViewModel
@@ -87,6 +86,7 @@ sealed class Screen(val route: String) {
         fun createRoute(tarballUri: String) = "container_name/${Uri.encode(tarballUri)}"
     }
     data object SparseImageConfig : Screen("sparse_image_config")
+    data object RecommendedConfig : Screen("recommended_config")
     data object ContainerConfig : Screen("container_config")
     data object InstallationSummary : Screen("installation_summary")
     data object InstallationProgress : Screen("installation_progress")
@@ -376,18 +376,6 @@ fun DroidspacesNavigation(
             if (viewModel.readingRecommendation) {
                 FullScreenLoading(context.getString(R.string.rootfs_config_loading))
             } else {
-                if (viewModel.recommendedHwAccess) {
-                    HardwareAccessDialog(
-                        onConfirm = { viewModel.confirmRecommendedHwAccess(true) },
-                        onDismiss = { viewModel.confirmRecommendedHwAccess(false) }
-                    )
-                } else if (viewModel.recommendedPrivileged.isNotEmpty()) {
-                    PrivilegedModeDialog(
-                        initialPrivileged = viewModel.recommendedPrivileged,
-                        onConfirm = viewModel::confirmRecommendedPrivileged,
-                        onDismiss = { viewModel.confirmRecommendedPrivileged("") }
-                    )
-                }
                 ContainerNameScreen(
                     initialName = viewModel.containerName,
                     initialHostname = viewModel.hostname,
@@ -395,13 +383,27 @@ fun DroidspacesNavigation(
                     existingContainerNames = sharedContainerViewModel.containerList.map { it.name },
                     onNext = { name, hostname ->
                         viewModel.setName(name, hostname)
-                        navController.navigate(Screen.ContainerConfig.route)
+                        navController.navigate(
+                            if (viewModel.recommendationLoaded) Screen.RecommendedConfig.route
+                            else Screen.ContainerConfig.route
+                        )
                     },
                     onClose = {
                         navController.popBackStack()
                     }
                 )
             }
+        }
+
+        composable(
+            route = Screen.RecommendedConfig.route,
+            enterTransition = defaultEnterTransition,
+            exitTransition = defaultExitTransition
+        ) {
+            RecommendedConfigScreen(
+                onNext = { navController.navigate(Screen.ContainerConfig.route) },
+                onBack = { navController.popBackStack() }
+            )
         }
 
         composable(

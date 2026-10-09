@@ -33,9 +33,8 @@ class ContainerInstallationViewModel : ViewModel() {
         private set
     var recommendationNotice: String? by mutableStateOf(null)
         private set
-    var recommendedHwAccess by mutableStateOf(false)
-        private set
-    var recommendedPrivileged by mutableStateOf("")
+    /** The archive carried a container.config and configState now holds all of it. */
+    var recommendationLoaded by mutableStateOf(false)
         private set
 
     var containerName: String by mutableStateOf("")
@@ -74,12 +73,10 @@ class ContainerInstallationViewModel : ViewModel() {
                     hostname = recommended.hostname
                     useSparseImage = recommended.useSparseImage
                     sparseImageSizeGB = recommended.sparseImageSizeGB ?: 8
-                    val state = recommended.toConfigState().let { HostCapabilities.state.value?.coerce(it) ?: it }
-                    recommendedHwAccess = state.enableHwAccess
-                    recommendedPrivileged = state.privileged
-                    // These two settings keep the same confirmation gates as manual setup.
-                    configState = state.copy(enableHwAccess = false, privileged = "")
-                    recommendationNotice = appContext.getString(R.string.rootfs_config_loaded)
+                    // Applied whole, hardware access and privileged mode included. The
+                    // RecommendedConfig page sends the user through the form to review it.
+                    configState = recommended.toConfigState().let { HostCapabilities.state.value?.coerce(it) ?: it }
+                    recommendationLoaded = true
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -89,16 +86,6 @@ class ContainerInstallationViewModel : ViewModel() {
                 readingRecommendation = false
             }
         }
-    }
-
-    fun confirmRecommendedHwAccess(enabled: Boolean) {
-        configState = configState.copy(enableHwAccess = enabled)
-        recommendedHwAccess = false
-    }
-
-    fun confirmRecommendedPrivileged(tags: String) {
-        configState = configState.copy(privileged = tags)
-        recommendedPrivileged = ""
     }
 
     fun setName(name: String, hostname: String) {
@@ -138,8 +125,7 @@ class ContainerInstallationViewModel : ViewModel() {
         tarballUri = null
         readingRecommendation = true
         recommendationNotice = null
-        recommendedHwAccess = false
-        recommendedPrivileged = ""
+        recommendationLoaded = false
         containerName = ""
         hostname = ""
         useSparseImage = true

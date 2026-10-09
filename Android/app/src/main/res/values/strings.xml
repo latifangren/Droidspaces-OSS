@@ -373,7 +373,9 @@
     <string name="container_setup">Container Setup</string>
     <string name="container_information">Container Information</string>
     <string name="rootfs_config_loading">Reading recommended settings…</string>
-    <string name="rootfs_config_loaded">Recommended settings loaded. You can review and change them in the next steps.</string>
+    <string name="rootfs_config_loaded_title">Settings were filled in for you</string>
+    <string name="rootfs_config_loaded">This archive came with its own container settings and every one of them is already applied, hardware access and privileged mode included. A rootfs from someone else can ask for more access than you meant to give. Read the next page carefully before you install.</string>
+    <string name="rootfs_config_review">Review configuration</string>
     <string name="rootfs_config_invalid">Could not load recommended settings. Configure this container manually. %1$s</string>
     <string name="container_name_label">Container Name *</string>
     <string name="container_name_placeholder">my-container</string>
