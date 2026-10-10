@@ -6,12 +6,18 @@ import android.net.Uri
 import com.topjohnwu.superuser.Shell
 import java.io.File
 
-/** Reads the optional container.config using the existing container config parser. */
+/**
+ * Reads the optional container.config, and the container.env an export may carry beside
+ * it, using the existing container config parser.
+ */
 object RootfsConfig {
-    // Export writes the config as the first member, so it decodes from the first few
-    // KB. Peeking a prefix keeps the wizard instant and works for pipe-backed providers.
+    // Export writes the config, then the optional env, as the first members, so both
+    // decode from the first few KB. Peeking a prefix keeps the wizard instant and works for pipe-backed providers.
     // ponytail: a config placed past the first 64 KiB is ignored, exports never do that
     private const val PEEK_BYTES = 64 * 1024
+
+    /** Export's name for the .env member, so it cannot clash with a guest's own /.env. */
+    const val ENV_MEMBER = "container.env"
 
     fun read(context: Context, uri: Uri): ContainerInfo? {
         val head = ByteArray(PEEK_BYTES)
@@ -32,11 +38,12 @@ object RootfsConfig {
             peek.writeBytes(head.copyOf(size))
             // The prefix ends mid-stream, so both tools exit non-zero after printing
             // the member. Its output is the answer, the exit code is not.
-            val out = Shell.cmd(
+            fun member(name: String) = Shell.cmd(
                 "$bb ${if (xz) "xzcat" else "zcat"} ${ContainerCommandBuilder.quote(peek.absolutePath)} 2>/dev/null | " +
-                    "$bb tar -xOf - container.config ./container.config 2>/dev/null"
-            ).exec().out
-            return if (out.isEmpty()) null else parse(out.joinToString("\n"))
+                    "$bb tar -xOf - $name ./$name 2>/dev/null"
+            ).exec().out.joinToString("\n")
+            val config = member(Constants.CONTAINER_CONFIG_FILE).ifEmpty { return null }
+            return parse(config)?.copy(envFileContent = member(ENV_MEMBER).ifBlank { null })
         } finally {
             peek.delete()
         }

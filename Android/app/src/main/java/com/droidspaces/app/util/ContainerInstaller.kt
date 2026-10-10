@@ -282,11 +282,13 @@ object ContainerInstaller {
 
     /**
      * Shell command that unpacks [tarball] into [destination]. An exported archive
-     * carries its host config as the first member. That file is for the wizard, and
-     * extracting it would leave the old host's settings lying in the guest's root.
+     * carries its host config, and maybe its .env, as the first members. Those are for
+     * the wizard, and extracting them would leave the old host's settings and secrets
+     * lying in the guest's root.
      */
     internal fun extractCommand(tarball: String, destination: String): String {
-        val skip = "--exclude=${Constants.CONTAINER_CONFIG_FILE} --exclude=./${Constants.CONTAINER_CONFIG_FILE}"
+        val skip = listOf(Constants.CONTAINER_CONFIG_FILE, RootfsConfig.ENV_MEMBER)
+            .joinToString(" ") { "--exclude=$it --exclude=./$it" }
         val unpack = if (tarball.lowercase().endsWith(".xz")) {
             "$BUSYBOX_PATH xzcat ${quote(tarball)} | $BUSYBOX_PATH tar -xpf - $skip"
         } else {

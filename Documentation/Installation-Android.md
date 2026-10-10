@@ -75,10 +75,14 @@ archive member, replacing any old copy in the rootfs. This lets the app read exp
 recommendations without decompressing the rest of the archive. If the first member is
 not `container.config` or `./container.config`, the app skips recommendations and opens
 the default configuration wizard. It does not search later entries.
-The new container name and storage location come from the wizard. Environment files
-are not imported. Bind mounts use the existing
-`bind_mounts=source:destination[:ro],...` format and can be reviewed in the wizard.
-The `container.config` member is never extracted into the new rootfs. The rootfs
+The new container name and storage location come from the wizard. Bind mounts use the
+existing `bind_mounts=source:destination[:ro],...` format and can be reviewed in the wizard.
+
+Environment variables are left out of an export by default, because they often hold
+passwords and tokens. When the container has any, the export asks first, and turning on
+"Include environment variables" adds them as a `container.env` member right after
+`container.config`. Importing that archive fills the wizard's environment variables too.
+Neither member is ever extracted into the new rootfs. The rootfs
 itself is not modified during export.
 
 > [!NOTE]

@@ -61,6 +61,8 @@ import com.droidspaces.app.ui.component.ContainerCard
 import com.droidspaces.app.ui.component.ContainerCardActions
 import com.droidspaces.app.ui.component.DialogFooterRow
 import com.droidspaces.app.ui.component.TerminalDialog
+import com.droidspaces.app.ui.component.ExportContainerDialog
+import com.droidspaces.app.util.ValidationUtils
 import com.droidspaces.app.ui.component.EmptyState
 import com.droidspaces.app.ui.component.ErrorState
 import com.droidspaces.app.ui.component.KernelUnsupportedState
@@ -103,6 +105,8 @@ fun ContainersScreen(
     var showUninstallConfirmation by remember { mutableStateOf<ContainerInfo?>(null) }
     var pendingSparseOperation by remember { mutableStateOf<SparseOperation?>(null) }
     var pendingExportContainer by remember { mutableStateOf<ContainerInfo?>(null) }
+    var pendingExportEnv by remember { mutableStateOf(false) }
+    var askExportEnv by remember { mutableStateOf<ContainerInfo?>(null) }
     var showRepoSheet by remember { mutableStateOf(false) }
     var fabMenuExpanded by rememberSaveable { mutableStateOf(false) }
 
@@ -111,10 +115,11 @@ fun ContainersScreen(
         contract = ActivityResultContracts.CreateDocument("application/gzip")
     ) { uri: Uri? ->
         val container = pendingExportContainer
+        val includeEnv = pendingExportEnv
         pendingExportContainer = null
         if (uri != null && container != null) {
             scope.launch {
-                opsViewModel.executeExport(container, uri, onError = { msg -> scope.showError(snackbarHostState, msg) })
+                opsViewModel.executeExport(container, uri, includeEnv, onError = { msg -> scope.showError(snackbarHostState, msg) })
             }
         }
     }
@@ -266,14 +271,14 @@ fun ContainersScreen(
                                 },
                                 onExport = {
                                     onExpandedContainerNameChange(null)
-                                    // Generate filename: <name>_yyyyMMdd_HHmmss.tar.gz
-                                    val timestamp = java.text.SimpleDateFormat(
-                                        "yyyyMMdd_HHmmss",
-                                        java.util.Locale.US
-                                    ).format(java.util.Date())
-                                    val fileName = "${container.name}_${timestamp}.tar.gz"
-                                    pendingExportContainer = container
-                                    exportFileLauncher.launch(fileName)
+                                    // Only a container with env vars has something to decide.
+                                    if (ValidationUtils.countEnvVars(container.envFileContent) > 0) {
+                                        askExportEnv = container
+                                    } else {
+                                        pendingExportEnv = false
+                                        pendingExportContainer = container
+                                        exportFileLauncher.launch(exportFileName(container))
+                                    }
                                 }
                                 )
                             )
@@ -390,6 +395,20 @@ fun ContainersScreen(
             )
         }
 
+        askExportEnv?.let { container ->
+            ExportContainerDialog(
+                containerName = container.name,
+                envCount = ValidationUtils.countEnvVars(container.envFileContent),
+                onConfirm = { includeEnv ->
+                    askExportEnv = null
+                    pendingExportEnv = includeEnv
+                    pendingExportContainer = container
+                    exportFileLauncher.launch(exportFileName(container))
+                },
+                onDismiss = { askExportEnv = null }
+            )
+        }
+
         // Uninstall confirmation dialog
         showUninstallConfirmation?.let { container ->
             UninstallConfirmationDialog(
@@ -457,6 +476,12 @@ fun ContainersScreen(
             )
         }
     }
+}
+
+/** <name>_yyyyMMdd_HHmmss.tar.gz, the name the save dialog suggests. */
+private fun exportFileName(container: ContainerInfo): String {
+    val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US).format(java.util.Date())
+    return "${container.name}_${timestamp}.tar.gz"
 }
 
 @Composable

@@ -369,6 +369,13 @@
     <string name="export_container">将容器导出为 tar 归档包</string>
     <string name="export_container_failed">导出容器失败 %1$s</string>
     <string name="starting_export">开始导出...</string>
+    <string name="export_container_title">导出 %1$s</string>
+    <string name="export_action">导出</string>
+    <plurals name="export_env_body">
+        <item quantity="other">此容器有 %1$d 个环境变量。环境变量常包含密码和 API 令牌，任何拿到归档的人都能读取。</item>
+    </plurals>
+    <string name="export_env_include">包含环境变量</string>
+    <string name="export_env_include_desc">分享归档时请保持关闭，仅在自己备份时开启。</string>
     <string name="feat_containers_title">真正的 Linux 容器</string>
     <string name="network_mode_host_short">主机</string>
     <string name="network_mode_nat_short">NAT</string>

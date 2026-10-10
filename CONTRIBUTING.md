@@ -382,7 +382,7 @@ boundary.
 | --- | --- | --- |
 | `ContainerManager` | `util/ContainerManager.kt` | Container discovery, config parsing, status, updates, uninstall |
 | `ContainerInfo`, `BindMount`, `PortForward`, `ContainerStatus` | same | The container model. `ContainerInfo.toConfigContent()` is the single config serializer, never hand-write config lines |
-| `RootfsConfig.read(context, uri)` | `util/RootfsConfig.kt` | Reading optional root-level `container.config` recommendations before installation, from a 64 KiB prefix of the archive. Uses the shared config parser without loading host environment files |
+| `RootfsConfig.read(context, uri)` | `util/RootfsConfig.kt` | Reading optional root-level `container.config` recommendations, plus the opt-in `container.env`, before installation, from a 64 KiB prefix of the archive. Uses the shared config parser without loading host environment files |
 | `DaemonModeRepository` | `util/DaemonModeRepository.kt` | Reading and writing the daemon mode flag |
 | `RootfsRepository.fetchAllAssets(context)` + `RootfsAsset` | `util/RootfsRepository.kt` | Fetching official and user rootfs repos |
 | `PreferencesManager.getInstance(context)` | `util/PreferencesManager.kt` | All settings persistence. Collect `daemonModeFlow` and `symlinkEnabledFlow` rather than registering your own preference listener |

@@ -623,6 +623,14 @@
     <string name="export_container">Export container as tarball</string>
     <string name="export_container_failed">Failed to export container %1$s</string>
     <string name="starting_export">Starting export...</string>
+    <string name="export_container_title">Export %1$s</string>
+    <string name="export_action">Export</string>
+    <plurals name="export_env_body">
+        <item quantity="one">This container has %1$d environment variable. Environment variables often hold passwords and API tokens, and anyone who gets the archive can read them.</item>
+        <item quantity="other">This container has %1$d environment variables. They often hold passwords and API tokens, and anyone who gets the archive can read them.</item>
+    </plurals>
+    <string name="export_env_include">Include environment variables</string>
+    <string name="export_env_include_desc">Leave this off for archives you share. Turn it on for your own backups.</string>
     <string name="migrate_dialog_title">Migrate to Sparse Image</string>
     <string name="resize_dialog_title">Resize Sparse Image</string>
     <string name="migrate_dialog_message">Migrating \"%1$s\" to a sparse image will create a dedicated ext4 filesystem. This operation is destructive if interrupted. Please backup your data.</string>

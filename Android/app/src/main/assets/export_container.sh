@@ -2,7 +2,10 @@
 # export_container.sh - Export a Droidspaces container as a .tar.gz archive
 # Copyright (c) 2026 ravindu644
 #
-# Usage: export_container.sh <container_name> <output_path>
+# Usage: export_container.sh <container_name> <output_path> [--with-env]
+#
+# --with-env also packs the container's .env as container.env. It is opt-in
+# because .env files tend to hold passwords and tokens.
 #
 # Works in both sparse image (rootfs.img) and directory-based modes.
 # In sparse mode: mounts rootfs.img read-only, tars from mount point, unmounts.
@@ -63,13 +66,14 @@ else
 fi
 
 # --- Argument validation ---
-if [ $# -ne 2 ]; then
-    error "Usage: export_container.sh <container_name> <output_path>"
+if [ $# -lt 2 ] || [ $# -gt 3 ] || { [ $# -eq 3 ] && [ "$3" != "--with-env" ]; }; then
+    error "Usage: export_container.sh <container_name> <output_path> [--with-env]"
     exit 1
 fi
 
 CONTAINER_NAME="$1"
 OUTPUT_PATH="$2"
+WITH_ENV="$3"
 
 if [ -z "$CONTAINER_NAME" ]; then
     error "Container name cannot be empty."
@@ -105,6 +109,19 @@ ROOTFS_PATH=$("$BUSYBOX" sed -n 's/^rootfs_path=//p' "$TEMP_CONFIG_DIR/container
 if [ -z "$ROOTFS_PATH" ]; then
     error "Could not extract rootfs_path from $CONFIG_FILE"
     exit 1
+fi
+
+# The config names the .env it uses, and the CLI can point that anywhere.
+HEADER_MEMBERS="container.config"
+if [ -n "$WITH_ENV" ]; then
+    ENV_FILE=$("$BUSYBOX" sed -n 's/^env_file=//p' "$TEMP_CONFIG_DIR/container.config")
+    if [ -n "$ENV_FILE" ] && [ -f "$ENV_FILE" ]; then
+        "$BUSYBOX" cp "$ENV_FILE" "$TEMP_CONFIG_DIR/container.env"
+        HEADER_MEMBERS="container.config container.env"
+        log "Including environment variables from $ENV_FILE"
+    else
+        log "No environment file to include"
+    fi
 fi
 
 # --- Detect mode ---
@@ -185,16 +202,20 @@ fi
 
 # --- Create archive ---
 log "Creating archive... (this may take a while)"
-# BusyBox applies only the last -C, so prepend a small config tar without its end
+# BusyBox applies only the last -C, so prepend a small header tar without its end
 # blocks. Both rootfs modes stay read-only, and no uncompressed rootfs copy is needed.
-"$BUSYBOX" tar -cf "$TEMP_CONFIG_DIR/config.tar" -C "$TEMP_CONFIG_DIR" container.config
-CONFIG_SIZE=$("$BUSYBOX" stat -c %s "$TEMP_CONFIG_DIR/container.config")
-CONFIG_BLOCKS=$((1 + (CONFIG_SIZE + 511) / 512))
+# HEADER_MEMBERS is word-split on purpose, both names are fixed and have no spaces.
+"$BUSYBOX" tar -cf "$TEMP_CONFIG_DIR/header.tar" -C "$TEMP_CONFIG_DIR" $HEADER_MEMBERS
+HEADER_BLOCKS=0
+for member in $HEADER_MEMBERS; do
+    size=$("$BUSYBOX" stat -c %s "$TEMP_CONFIG_DIR/$member")
+    HEADER_BLOCKS=$((HEADER_BLOCKS + 1 + (size + 511) / 512))
+done
 if ! (
     set -o pipefail
     {
-        "$BUSYBOX" dd if="$TEMP_CONFIG_DIR/config.tar" bs=512 count="$CONFIG_BLOCKS" 2>/dev/null &&
-        "$BUSYBOX" tar -cf - --exclude='./container.config' -C "$TAR_ROOT" .
+        "$BUSYBOX" dd if="$TEMP_CONFIG_DIR/header.tar" bs=512 count="$HEADER_BLOCKS" 2>/dev/null &&
+        "$BUSYBOX" tar -cf - --exclude='./container.config' --exclude='./container.env' -C "$TAR_ROOT" .
     } | "$BUSYBOX" gzip > "$OUTPUT_PATH"
 ); then
     error "tar failed. Removing incomplete archive."

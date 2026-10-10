@@ -102,6 +102,7 @@ class ContainerOperationsViewModel(app: Application) : AndroidViewModel(app) {
     suspend fun executeExport(
         container: ContainerInfo,
         outputUri: Uri,
+        includeEnv: Boolean,
         onError: (String) -> Unit,
     ) {
         runningOperationContainer = container.name
@@ -146,7 +147,8 @@ class ContainerOperationsViewModel(app: Application) : AndroidViewModel(app) {
 
             val cmd = "${ContainerCommandBuilder.quote(deployed.absolutePath)} " +
                 "${ContainerCommandBuilder.quote(container.name)} " +
-                ContainerCommandBuilder.quote(output)
+                ContainerCommandBuilder.quote(output) +
+                if (includeEnv) " --with-env" else ""
             val success = ContainerOperationExecutor.executeCommand(
                 command = cmd,
                 operation = "export",
