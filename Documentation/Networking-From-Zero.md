@@ -543,17 +543,17 @@ That leads to one simple rule, keyed on **whether the gateway is running**:
 
 So healing is driven by **the gateway**, not the clients. On every boot cycle, the gateway container's monitor calls `ds_net_rewire_gateway_clients()`. It scans the running containers, finds those that delegate to this gateway, and runs `gateway_wire_client` for each, setting up the gateway-side `eth1` cable and every client's `eth0` in the gateway's *current* namespace. When the gateway **starts or reboots**, every running client is (re)wired **without restarting the client**.
 
-Wiring nothing while the gateway is down, instead of half-wiring a bridge and a dangling veth, also closes a race. A client started before its gateway can have its gateway and LAN settings (`--gateway-net`, `--host-bridge`, …) edited before the gateway comes up, and the gateway then wires each client from that client's *current* config, never a stale one.
+Wiring nothing while the gateway is down, instead of half-wiring a bridge and a dangling veth, also closes a race. A client started before its gateway can have its gateway and LAN settings (`--gateway-net`, `--gateway-bridge`, …) edited before the gateway comes up, and the gateway then wires each client from that client's *current* config, never a stale one.
 
-There is exactly **one actor** (the gateway) doing the wiring, so there is nothing to poll and no thundering herd. Wiring is serialised per segment with an advisory file lock, so concurrent client starts and the gateway's re-wire cannot race. Both `eth1` (gateway side) and each `eth0` (client side) keep a **stable MAC** and are created inside their namespace under their final name, in the one request that creates the pair. Nothing is moved or renamed afterwards: a rename is announced by the kernel before the device can be looked up by its new name, and a `netifd` inside the gateway that hears the announcement first fails to claim the device for good (seen on a 4.14 kernel, where that gap is tens of milliseconds).
+The gateway is the main actor, with one exception. Each side decides whether the other is running from its pidfile, which only appears once that container's init has started, so a client and a gateway booting at the same moment can each see the other as down and neither wires the client. To cover that, a client that is still unwired checks again about every two seconds and wires itself once the gateway is up, then stops checking. Wiring is serialised per segment with an advisory file lock, so concurrent client starts and the gateway's re-wire cannot race. Both `eth1` (gateway side) and each `eth0` (client side) keep a **stable MAC** and are created inside their namespace under their final name, in the one request that creates the pair. Nothing is moved or renamed afterwards: a rename is announced by the kernel before the device can be looked up by its new name, and a `netifd` inside the gateway that hears the announcement first fails to claim the device for good (seen on a 4.14 kernel, where that gap is tens of milliseconds).
 
 ### What happens when containers stop
 
 Cleanup in gateway mode is deliberately minimal, in line with "plumbing only":
 
-- **A client stops:** only that client's own veth is removed (gateway clients use the `ds-c<PID>` prefix, distinct from NAT's `ds-v<PID>`). The bridge and the gateway's `eth1` stay up, so other clients on the segment are not affected.
+- **A client stops:** only that client's own veth is removed (a gateway client's host-side veth is `ds-c` plus a hash of the container's name, distinct from NAT's `ds-v<PID>`, so a leftover from a crashed instance is found and replaced by the next start). The bridge and the gateway's `eth1` stay up, so other clients on the segment are not affected.
 - **The last client stops while the gateway is still running:** the bridge is **kept**, not reaped. Tearing it down would flap the carrier on the gateway's live `eth1` and sometimes make netifd report "device initialization failed". An idle bridge with no IP does no harm, and the next client reuses it.
-- **The gateway stops:** the gateway-side veth goes away with its namespace. Once no clients remain *and* the gateway is gone, the idle bridge is reaped.
+- **The gateway stops:** Droidspaces deletes the gateway-side veth itself. It cannot be left to the kernel: the host end of a veth holds a reference to its peer's namespace, so the dead gateway's namespace would never be freed. Once no clients remain *and* the gateway is gone, the idle bridge is reaped.
 
 ---
 
@@ -642,7 +642,7 @@ For a second segment, pass `--gateway-iface=eth2` so OpenWRT sees a separate int
 
 **Important detail:** `--gateway-iface` only takes effect when the gateway veth for a segment is first created, which is when the first client container on that segment starts. The gateway veth is shared by every client on the same `--gateway-net`: it is created once and reused. Every later client skips creating the gateway veth and only wires its own app veth into the existing bridge.
 
-So if you start two containers on `--gateway-net=lan` and both pass `--gateway-iface=eth1`, that works: the first creates the veth and renames it `eth1`, and the second finds the veth already there and ignores `--gateway-iface`.
+So if you start two containers on `--gateway-net=lan` and both pass `--gateway-iface=eth1`, that works: the first creates the veth with its peer named `eth1` inside OpenWRT, and the second finds the veth already there and ignores `--gateway-iface`.
 
 ### The flag conflict you must avoid
 
@@ -656,7 +656,7 @@ droidspaces --name=kali   --net=gateway --gateway=openwrt --gateway-net=lan --ga
 droidspaces --name=torbox --net=gateway --gateway=openwrt --gateway-net=vpn --gateway-iface=eth1 start
 ```
 
-When the second command runs, Droidspaces tries to move a new veth peer into OpenWRT and rename it `eth1`, but `eth1` already exists there from the first segment. Instead of failing loudly, the code detects the conflict and brings the existing `eth1` up again, leaving the new veth peer inside OpenWRT under its raw hash name (`ds-hYYYYYYYY`). OpenWRT has no config for `ds-hYYYYYYYY` and silently ignores it. The `vpn` segment gets no gateway-side interface: no DHCP, no routing, and its containers are effectively isolated.
+When the second command runs, Droidspaces sees that OpenWRT already has an `eth1`, belonging to the first segment, and refuses to wire the `vpn` segment. The log says `'openwrt' already has an interface named eth1 that is not this segment's cable`. The `vpn` segment gets no gateway-side interface: no DHCP, no routing, and its containers are effectively isolated.
 
 **The rule:** every `--gateway-net` segment needs its own `--gateway-iface` name.
 
