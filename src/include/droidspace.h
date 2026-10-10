@@ -20,6 +20,7 @@
 #include <getopt.h>
 #include <grp.h>
 #include <limits.h>
+#include <linux/if_link.h>
 #include <net/if.h>
 #include <poll.h>
 #include <pthread.h>
@@ -208,6 +209,7 @@ enum ds_net_mode {
   DS_NET_NAT,      /* isolated netns + bridge + MASQUERADE      */
   DS_NET_NONE,     /* isolated netns with loopback only          */
   DS_NET_GATEWAY,  /* isolated netns attached to gateway LAN     */
+  DS_NET_MACVLAN,  /* isolated netns, macvlan on a host NIC      */
 };
 
 /* Opaque RTNETLINK context - defined in ds_netlink.c */
@@ -362,12 +364,14 @@ struct ds_config {
   char container_name[256];          /* --name= (mandatory) */
   char hostname[256];                /* --hostname= or container_name */
   char dns_servers[1024];            /* --dns= (comma/space separated) */
-  enum ds_net_mode net_mode;         /* --net=host|nat|none|gateway */
+  enum ds_net_mode net_mode;         /* --net=host|nat|none|gateway|macvlan */
   char dns_server_content[1024];     /* In-memory DNS config for boot */
   char gateway_container[256];       /* --gateway=NAME for gateway mode */
   char gateway_net[64];              /* --gateway-net=NAME (default: lan) */
   char gateway_bridge[IFNAMSIZ];     /* optional host bridge name */
   char gateway_lan_ifname[IFNAMSIZ]; /* ifname inside gateway (default: eth1) */
+  char macvlan_parent[IFNAMSIZ];     /* --macvlan-parent= host NIC */
+  uint32_t macvlan_mode;             /* MACVLAN_MODE_*, 0 = bridge */
 
   /* UUID for PID discovery */
   char uuid[DS_UUID_LEN + 1];
@@ -605,6 +609,11 @@ int ds_config_load_by_name(const char *name, struct ds_config *cfg);
 int ds_config_save(const char *config_path, struct ds_config *cfg);
 int ds_config_save_by_name(const char *name, struct ds_config *cfg);
 int ds_config_validate(struct ds_config *cfg);
+/* --net / net_mode= value to its mode, -1 if unknown. */
+int ds_parse_net_mode(const char *s);
+/* --macvlan-mode / macvlan_mode= value to MACVLAN_MODE_*, 0 if unknown. */
+uint32_t ds_parse_macvlan_mode(const char *s);
+const char *ds_macvlan_mode_name(uint32_t mode);
 int ds_config_add_bind(struct ds_config *cfg, const char *src, const char *dest,
                        int ro);
 void free_config_binds(struct ds_config *cfg);
@@ -763,6 +772,11 @@ void ds_net_mark_local_forward_active(void);
  * Called from the gateway container's monitor on each boot cycle. */
 void ds_net_rewire_gateway_clients(const char *gateway_name, pid_t gateway_pid);
 int ds_net_gateway_reconcile(struct ds_config *cfg, pid_t client_pid);
+/* Macvlan: create eth0 in the container on its parent NIC. Called at start
+ * and then on every heartbeat, since unplugging the parent deletes it. */
+int ds_net_macvlan_wire(struct ds_config *cfg, pid_t init_pid, int at_start);
+/* Refuse a macvlan start that could never get a network. 0 or -1. */
+int ds_net_macvlan_check(const struct ds_config *cfg);
 /* Gateway teardown: when a container that ACTS AS A GATEWAY stops, explicitly
  * delete the gateway-side veth(s) it serves and reap any now-idle delegated
  * bridge.  The kernel does not auto-reap these (the host-side veth pins its
@@ -781,6 +795,8 @@ int ds_nl_link_exists(ds_nl_ctx_t *ctx, const char *ifname);
 int ds_nl_get_ifindex(ds_nl_ctx_t *ctx, const char *ifname);
 int ds_nl_create_bridge(ds_nl_ctx_t *ctx, const char *name);
 int ds_nl_create_veth(ds_nl_ctx_t *ctx, const char *host, const char *peer);
+int ds_nl_create_macvlan(ds_nl_ctx_t *ctx, const char *name, int parent_index,
+                         int netns_fd, uint32_t mode, const uint8_t mac[6]);
 int ds_nl_create_veth_in(ds_nl_ctx_t *ctx, const char *host, const char *peer,
                          int peer_netns_fd, const uint8_t *peer_mac);
 int ds_nl_set_master(ds_nl_ctx_t *ctx, const char *ifname, const char *master);
@@ -815,6 +831,8 @@ int ds_nl_count_ifaces_with_prefix(ds_nl_ctx_t *ctx, const char *prefix);
 int ds_nl_count_bridge_members_with_prefix(ds_nl_ctx_t *ctx, const char *bridge,
                                            const char *prefix);
 int ds_nl_list_ifaces(ds_nl_ctx_t *ctx, char names[][IFNAMSIZ], int max);
+/* 1 if the kernel can create a macvlan, cached per boot */
+int ds_nl_probe_macvlan(void);
 /* Kernel capability probe - call before any NAT setup */
 int ds_nl_probe_nat_capability(char *reason, size_t rsz);
 

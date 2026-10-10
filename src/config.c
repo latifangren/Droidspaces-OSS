@@ -15,6 +15,46 @@ static void add_unknown_line(struct ds_config *cfg, const char *line);
 
 /* Helpers */
 
+int ds_parse_net_mode(const char *s) {
+  if (strcmp(s, "nat") == 0)
+    return DS_NET_NAT;
+  if (strcmp(s, "none") == 0)
+    return DS_NET_NONE;
+  if (strcmp(s, "host") == 0)
+    return DS_NET_HOST;
+  if (strcmp(s, "gateway") == 0 || strcmp(s, "delegated-gateway") == 0)
+    return DS_NET_GATEWAY;
+  if (strcmp(s, "macvlan") == 0)
+    return DS_NET_MACVLAN;
+  return -1;
+}
+
+static const struct {
+  const char *name;
+  uint32_t mode;
+} k_macvlan_modes[] = {
+    {"bridge", MACVLAN_MODE_BRIDGE},
+    {"private", MACVLAN_MODE_PRIVATE},
+    {"vepa", MACVLAN_MODE_VEPA},
+    {"passthru", MACVLAN_MODE_PASSTHRU},
+};
+
+uint32_t ds_parse_macvlan_mode(const char *s) {
+  for (size_t i = 0; i < sizeof(k_macvlan_modes) / sizeof(k_macvlan_modes[0]);
+       i++)
+    if (strcmp(s, k_macvlan_modes[i].name) == 0)
+      return k_macvlan_modes[i].mode;
+  return 0;
+}
+
+const char *ds_macvlan_mode_name(uint32_t mode) {
+  for (size_t i = 0; i < sizeof(k_macvlan_modes) / sizeof(k_macvlan_modes[0]);
+       i++)
+    if (k_macvlan_modes[i].mode == mode)
+      return k_macvlan_modes[i].name;
+  return "bridge";
+}
+
 static char *trim_whitespace(char *str) {
   while (isspace((unsigned char)*str))
     str++;
@@ -359,21 +399,14 @@ int ds_config_load(const char *config_path, struct ds_config *cfg) {
         ds_warn("config: ignoring invalid static_nat_ip '%s': %s", val,
                 _errbuf);
     } else if (strcmp(key, "net_mode") == 0) {
-      if (strcmp(val, "nat") == 0) {
-        cfg->net_mode = DS_NET_NAT;
-      } else if (strcmp(val, "none") == 0) {
-        cfg->net_mode = DS_NET_NONE;
-      } else if (strcmp(val, "host") == 0) {
-        cfg->net_mode = DS_NET_HOST;
-      } else if (strcmp(val, "gateway") == 0 ||
-                 strcmp(val, "delegated-gateway") == 0) {
-        cfg->net_mode = DS_NET_GATEWAY;
-      } else {
+      int mode = ds_parse_net_mode(val);
+      if (mode < 0) {
         ds_warn(
             "Unknown network mode '%s' in config file. Defaulting to 'nat'.",
             val);
-        cfg->net_mode = DS_NET_NAT;
+        mode = DS_NET_NAT;
       }
+      cfg->net_mode = (enum ds_net_mode)mode;
     } else if (strcmp(key, "gateway_container") == 0) {
       if (validate_container_name(val))
         safe_strncpy(cfg->gateway_container, val,
@@ -393,6 +426,15 @@ int ds_config_load(const char *config_path, struct ds_config *cfg) {
                      sizeof(cfg->gateway_lan_ifname));
       else
         ds_warn("config: ignoring too-long gateway_lan_ifname '%s'", val);
+    } else if (strcmp(key, "macvlan_parent") == 0) {
+      if (strlen(val) < IFNAMSIZ)
+        safe_strncpy(cfg->macvlan_parent, val, sizeof(cfg->macvlan_parent));
+      else
+        ds_warn("config: ignoring too-long macvlan_parent '%s'", val);
+    } else if (strcmp(key, "macvlan_mode") == 0) {
+      cfg->macvlan_mode = ds_parse_macvlan_mode(val);
+      if (!cfg->macvlan_mode)
+        ds_warn("config: unknown macvlan_mode '%s' - using bridge", val);
     } else if (strcmp(key, "upstream_interfaces") == 0) {
       /* Comma-separated interface names/wildcards, e.g. "wlan0,rmnet*".  When
        * present this pins NAT WAN to these interfaces in priority order and
@@ -702,6 +744,8 @@ static void ds_config_serialize_known(FILE *f, struct ds_config *cfg) {
     fprintf(f, "net_mode=none\n");
   } else if (cfg->net_mode == DS_NET_GATEWAY) {
     fprintf(f, "net_mode=gateway\n");
+  } else if (cfg->net_mode == DS_NET_MACVLAN) {
+    fprintf(f, "net_mode=macvlan\n");
   } else {
     fprintf(f, "net_mode=host\n");
   }
@@ -715,6 +759,13 @@ static void ds_config_serialize_known(FILE *f, struct ds_config *cfg) {
       fprintf(f, "gateway_bridge=%s\n", cfg->gateway_bridge);
     if (cfg->gateway_lan_ifname[0])
       fprintf(f, "gateway_lan_ifname=%s\n", cfg->gateway_lan_ifname);
+  }
+
+  if (cfg->net_mode == DS_NET_MACVLAN) {
+    if (cfg->macvlan_parent[0])
+      fprintf(f, "macvlan_parent=%s\n", cfg->macvlan_parent);
+    if (cfg->macvlan_mode && cfg->macvlan_mode != MACVLAN_MODE_BRIDGE)
+      fprintf(f, "macvlan_mode=%s\n", ds_macvlan_mode_name(cfg->macvlan_mode));
   }
 
   if (cfg->net_mode == DS_NET_NAT && cfg->upstream_iface_count > 0) {

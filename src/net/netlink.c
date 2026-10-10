@@ -303,6 +303,39 @@ int ds_nl_probe_nat_capability(char *reason, size_t rsz) {
   }
 }
 
+/* Can this kernel make a macvlan? It needs an Ethernet parent and the phone
+ * may have none plugged in, so the probe brings its own: a veth, which the NAT
+ * probe already requires. A veth left behind by a probe that crashed is still a
+ * fine parent, and a macvlan left on it is proof enough. A pass is remembered
+ * for the boot, like the NAT probe's, since every start asks. */
+int ds_nl_probe_macvlan(void) {
+  char boot_id[64] = "", seen[64] = "", stamp[PATH_MAX];
+  read_file("/proc/sys/kernel/random/boot_id", boot_id, sizeof(boot_id));
+  snprintf(stamp, sizeof(stamp), "%s/macvlan_caps", get_net_dir());
+  if (boot_id[0] && read_file(stamp, seen, sizeof(seen)) > 0 &&
+      strcmp(seen, boot_id) == 0)
+    return 1;
+
+  ds_nl_ctx_t *ctx = ds_nl_open();
+  if (!ctx)
+    return 0;
+  static const uint8_t mac[6] = {0x02, 0, 0, 0, 0, 0x01};
+  int own = ds_nl_create_veth(ctx, "ds-cap-mh0", "ds-cap-mp0") == 0;
+  int ret = ds_nl_create_macvlan(ctx, "ds-cap-mv0",
+                                 ds_nl_get_ifindex(ctx, "ds-cap-mh0"), -1,
+                                 MACVLAN_MODE_BRIDGE, mac);
+  if (ret == 0)
+    ds_nl_del_link(ctx, "ds-cap-mv0");
+  if (own)
+    ds_nl_del_link(ctx, "ds-cap-mh0"); /* takes the peer with it */
+  ds_nl_close(ctx);
+
+  int ok = (ret == 0 || ret == -EEXIST);
+  if (ok && boot_id[0])
+    write_file(stamp, boot_id);
+  return ok;
+}
+
 /* Link existence check */
 
 int ds_nl_link_exists(ds_nl_ctx_t *ctx, const char *ifname) {
@@ -432,6 +465,48 @@ int ds_nl_create_veth_in(ds_nl_ctx_t *ctx, const char *host, const char *peer,
 
 int ds_nl_create_veth(ds_nl_ctx_t *ctx, const char *host, const char *peer) {
   return ds_nl_create_veth_in(ctx, host, peer, -1, NULL);
+}
+
+/* Create a macvlan on the NIC parent_index of the namespace ctx lives in.
+ * With netns_fd >= 0 it is born inside that namespace, under `name` and with
+ * `mac`, in one request, exactly like the far end of a veth.
+ *
+ * It cannot be born as eth0 when its parent is called eth0, whichever
+ * namespace asks: the kernel checks the name, and with IFLA_LINK_NETNSID even
+ * registers the device, in the parent's namespace before moving it. So the
+ * caller creates it under a name the host does not have and renames it. */
+int ds_nl_create_macvlan(ds_nl_ctx_t *ctx, const char *name, int parent_index,
+                         int netns_fd, uint32_t mode, const uint8_t mac[6]) {
+  struct {
+    struct nlmsghdr n;
+    struct ifinfomsg i;
+    char buf[512];
+  } req;
+  uint32_t link = (uint32_t)parent_index;
+
+  memset(&req, 0, sizeof(req));
+  req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
+  req.n.nlmsg_type = RTM_NEWLINK;
+  req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL | NLM_F_ACK;
+  req.i.ifi_family = AF_UNSPEC;
+
+  nl_addattr(&req.n, (int)sizeof(req), IFLA_IFNAME, name,
+             (int)strlen(name) + 1);
+  nl_addattr(&req.n, (int)sizeof(req), IFLA_LINK, &link, sizeof(link));
+  if (netns_fd >= 0)
+    nl_addattr(&req.n, (int)sizeof(req), IFLA_NET_NS_FD, &netns_fd,
+               (int)sizeof(int));
+  nl_addattr(&req.n, (int)sizeof(req), IFLA_ADDRESS, mac, 6);
+
+  struct rtattr *linfo = nl_nest_begin(&req.n, (int)sizeof(req), IFLA_LINKINFO);
+  nl_addattr(&req.n, (int)sizeof(req), IFLA_INFO_KIND, "macvlan", 8);
+  struct rtattr *ldata =
+      nl_nest_begin(&req.n, (int)sizeof(req), IFLA_INFO_DATA);
+  nl_addattr(&req.n, (int)sizeof(req), IFLA_MACVLAN_MODE, &mode, sizeof(mode));
+  nl_nest_end(&req.n, ldata);
+  nl_nest_end(&req.n, linfo);
+
+  return ds_nl_talk(ctx, &req.n);
 }
 
 /* Attach an interface to a bridge (IFLA_MASTER) */

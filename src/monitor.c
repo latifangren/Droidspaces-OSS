@@ -382,6 +382,8 @@ reboot_loop:;
           ds_warn("[NET] Monitor: setup_gateway_veth_side failed - "
                   "container will remain isolated");
         }
+      } else if (cfg->net_mode == DS_NET_MACVLAN) {
+        ds_net_macvlan_wire(cfg, netns_pid, 1);
       }
 
       /* Gateway self-heal: if any running client delegates to THIS container as
@@ -403,9 +405,9 @@ reboot_loop:;
       /* Send handshake to init */
       struct ds_net_handshake hs;
       ds_net_derive_handshake(netns_pid, cfg, &hs);
-      if (cfg->net_mode == DS_NET_GATEWAY)
-        ds_log("[NET] Monitor: sending DONE (gateway mode: eth0 is wired "
-               "host-side, IP comes from the gateway's DHCP)");
+      if (cfg->net_mode != DS_NET_NAT)
+        ds_log("[NET] Monitor: sending DONE (eth0, if any, is wired "
+               "host-side and addressed by the LAN's DHCP)");
       else
         ds_log("[NET] Monitor: sending DONE: peer=%s ip=%s", hs.peer_name,
                hs.ip_str);
@@ -480,7 +482,7 @@ reboot_loop:;
     sigaddset(&mask, SIGCHLD);
     sigprocmask(SIG_BLOCK, &mask, NULL);
     int sfd = signalfd(-1, &mask, SFD_NONBLOCK | SFD_CLOEXEC);
-    int gw_wired = 0, gw_tick = 0;
+    int gw_wired = 0, net_tick = 0;
     struct timespec last_tick = {0, 0};
 
     while (1) {
@@ -518,8 +520,13 @@ reboot_loop:;
 
         /* A gateway client whose gateway was not up yet is still unwired.
          * Look again every couple of seconds until the cable is in. */
-        if (cfg->net_mode == DS_NET_GATEWAY && !gw_wired && ++gw_tick % 4 == 0)
+        if (cfg->net_mode == DS_NET_GATEWAY && !gw_wired && ++net_tick % 4 == 0)
           gw_wired = ds_net_gateway_reconcile(cfg, cfg->container_pid);
+
+        /* A macvlan dies with its parent NIC, so keep checking for good:
+         * a replugged USB adapter gets the container's eth0 back. */
+        if (cfg->net_mode == DS_NET_MACVLAN && ++net_tick % 4 == 0)
+          ds_net_macvlan_wire(cfg, cfg->container_pid, 0);
       }
 
       /* Poll the signalfd and, in background mode, the console PTY master.

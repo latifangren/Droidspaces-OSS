@@ -199,8 +199,12 @@ static int open_container_netns(const char *netns_path) {
   return fd;
 }
 
-/* Bring a link up inside a container's network namespace, from the host. */
-static int ds_netns_link_up(const char *netns_path, const char *ifname) {
+/* Bring a link up inside a container's network namespace, from the host.
+ * With `from` set, the link is first renamed from that name to ifname, and
+ * deleted if the rename or the bring-up fails, so a half-made one is never
+ * left behind. Returns 0 or a negative errno. */
+static int ds_netns_link_up(const char *netns_path, const char *from,
+                            const char *ifname) {
   int self_fd = open("/proc/self/ns/net", O_RDONLY | O_CLOEXEC);
   if (self_fd < 0)
     return -errno;
@@ -223,8 +227,10 @@ static int ds_netns_link_up(const char *netns_path, const char *ifname) {
     ret = -errno;
     goto out_restore;
   }
-  if (ds_nl_link_up(ctx, ifname) < 0)
-    ret = -1;
+  if (from && (ret = ds_nl_rename(ctx, from, ifname)) < 0)
+    ds_nl_del_link(ctx, from);
+  else if ((ret = ds_nl_link_up(ctx, ifname)) < 0 && from)
+    ds_nl_del_link(ctx, ifname);
   ds_nl_close(ctx);
 
 out_restore:
@@ -1422,7 +1428,7 @@ static int gateway_ensure_lan_uplink_locked(struct ds_config *cfg,
     ds_warn("[NET] Gateway: failed to bring up %s", gw_host);
   ds_nl_close(ctx);
 
-  if (ds_netns_link_up(gw_netns, gw_if) < 0)
+  if (ds_netns_link_up(gw_netns, NULL, gw_if) < 0)
     ds_warn("[NET] Gateway: created %s but could not bring it up", gw_if);
 
   ds_log("[NET] Gateway: LAN uplink ready on %s -> %s (%s)", bridge,
@@ -1527,7 +1533,7 @@ static int gateway_wire_client(struct ds_config *cfg, pid_t client_pid,
     ds_warn("[NET] Gateway: failed to bring up %s", app_host);
   ds_nl_close(ctx);
 
-  if (ds_netns_link_up(netns, "eth0") < 0)
+  if (ds_netns_link_up(netns, NULL, "eth0") < 0)
     ds_warn("[NET] Gateway: wired '%s' but could not bring up its eth0",
             cfg->container_name);
 
@@ -1756,6 +1762,168 @@ void ds_net_gateway_teardown(const char *gateway_name) {
   closedir(d);
 }
 
+/* Macvlan mode
+ *
+ * The container's eth0 is a macvlan on a host NIC: its own MAC on that NIC's
+ * LAN, its address from the LAN's DHCP server, no NAT, and nothing on the host
+ * to install or keep in sync. It is born inside the container as ds-m<pid> and
+ * renamed to eth0 there (see ds_nl_create_macvlan for why it cannot be born
+ * as eth0). At start that happens before the guest's init runs, so the guest
+ * only ever sees eth0.
+ *
+ * Unplugging the parent makes the kernel delete every macvlan on it, and the
+ * container cannot bring its eth0 back by itself. So the monitor calls this on
+ * every heartbeat as well as at start, and a replugged NIC gets its eth0 back
+ * within a couple of seconds. eth0 already being there is the common case and
+ * the cheap one. */
+
+/* Create eth0 in the container once. 1 when it is in place, 0 while the
+ * parent is absent, or a negative errno. */
+static int macvlan_create(struct ds_config *cfg, const char *netns,
+                          pid_t init_pid) {
+  if (netns_has_link(netns, "eth0"))
+    return 1;
+  int parent = (int)if_nametoindex(cfg->macvlan_parent);
+  if (parent <= 0)
+    return 0;
+
+  uint8_t mac[6];
+  char tmp[IFNAMSIZ];
+  ds_derive_mac(cfg->container_name, "ds-mac:", mac);
+  snprintf(tmp, sizeof(tmp), "ds-m%d", (int)init_pid);
+
+  int fd = open_container_netns(netns);
+  ds_nl_ctx_t *ctx = fd >= 0 ? ds_nl_open() : NULL;
+  int ret = ctx ? ds_nl_create_macvlan(ctx, tmp, parent, fd,
+                                       cfg->macvlan_mode ? cfg->macvlan_mode
+                                                         : MACVLAN_MODE_BRIDGE,
+                                       mac)
+                : -errno;
+  if (ctx)
+    ds_nl_close(ctx);
+  if (fd >= 0)
+    close(fd);
+  if (ret == 0)
+    ret = ds_netns_link_up(netns, tmp, "eth0");
+  return ret == 0 ? 1 : ret;
+}
+
+/* The running container, other than cfg's own, that holds cfg's parent in a
+ * way the kernel will not share: passthru takes the whole NIC, so it cannot
+ * sit next to any other macvlan. Fills `who` and returns 1, or returns 0. */
+static int macvlan_parent_taken(const struct ds_config *cfg, char *who,
+                                size_t sz) {
+  char dir[PATH_MAX];
+  snprintf(dir, sizeof(dir), "%s/Containers", get_workspace_dir());
+  DIR *d = opendir(dir);
+  if (!d)
+    return 0;
+
+  int taken = 0;
+  struct dirent *ent;
+  while (!taken && (ent = readdir(d)) != NULL) {
+    if (ent->d_name[0] == '.')
+      continue;
+    struct ds_config c = {0};
+    if (ds_config_load_by_name(ent->d_name, &c) != 0)
+      continue;
+    pid_t p = 0;
+    if (c.net_mode == DS_NET_MACVLAN &&
+        strcmp(c.container_name, cfg->container_name) != 0 &&
+        strcmp(c.macvlan_parent, cfg->macvlan_parent) == 0 &&
+        (c.macvlan_mode == MACVLAN_MODE_PASSTHRU ||
+         cfg->macvlan_mode == MACVLAN_MODE_PASSTHRU) &&
+        is_container_running(&c, &p) && p > 0) {
+      safe_strncpy(who, c.container_name, sz);
+      taken = 1;
+    }
+    ds_config_free(&c);
+  }
+  closedir(d);
+  return taken;
+}
+
+/* Everything that would leave a macvlan container without a network for good,
+ * checked before it starts so the user gets a reason instead of a container
+ * with no eth0. Start and restart both come through here, after a restart has
+ * reloaded the config it will actually boot with. A parent that is merely
+ * unplugged is fine: eth0 follows when it is plugged in. Returns 0 or -1. */
+int ds_net_macvlan_check(const struct ds_config *cfg) {
+  if (!cfg->macvlan_parent[0]) {
+    ds_error("--net=macvlan requires --macvlan-parent=<interface>.");
+    return -1;
+  }
+  if (!ds_nl_probe_macvlan()) {
+    ds_error("--net=macvlan is not supported by this kernel (CONFIG_MACVLAN).");
+    return -1;
+  }
+
+  char path[PATH_MAX], type[8] = "";
+  snprintf(path, sizeof(path), "/sys/class/net/%s/type", cfg->macvlan_parent);
+  if (read_file(path, type, sizeof(type)) > 0 &&
+      (atoi(type) != 1 || strcmp(cfg->macvlan_parent, "lo") == 0)) {
+    ds_error("%s is not an Ethernet interface, so it cannot carry a macvlan.",
+             cfg->macvlan_parent);
+    return -1;
+  }
+
+  char who[256];
+  if (macvlan_parent_taken(cfg, who, sizeof(who))) {
+    ds_error("%s is in use by the running container '%s': in passthru mode a "
+             "network interface takes one container only.",
+             cfg->macvlan_parent, who);
+    return -1;
+  }
+  return 0;
+}
+
+/* at_start: the guest's init is still waiting for us. A restart can get here
+ * while the previous instance's namespace is still being torn down, which the
+ * kernel does in the background, and its eth0 still holds the parent: passthru
+ * allows one macvlan per NIC (EINVAL), and the stable MAC can only be on it
+ * once (EADDRINUSE). Waiting it out here, rather than leaving it to the
+ * heartbeat, keeps eth0 from turning up under a guest that is already running.
+ * The other ways a macvlan cannot be made were refused before the start, see
+ * ds_net_macvlan_check().
+ *
+ * Logs only when the result changes, since it is called every 2 s. The memory
+ * starts over with each boot, so a guest reboot logs its eth0 again. */
+int ds_net_macvlan_wire(struct ds_config *cfg, pid_t init_pid, int at_start) {
+  static int last = 2; /* none of the results below */
+  char netns[PATH_MAX];
+
+  if (at_start)
+    last = 2;
+  snprintf(netns, sizeof(netns), "/proc/%d/ns/net", (int)init_pid);
+  /* A heartbeat between init exiting and the monitor noticing finds no
+   * namespace. That is a shutdown, not a failure worth a warning. */
+  if (init_pid <= 0 || access(netns, F_OK) != 0)
+    return -ESRCH;
+
+  int ret = macvlan_create(cfg, netns, init_pid);
+  for (int i = 0; at_start && (ret == -EINVAL || ret == -EADDRINUSE) && i < 50;
+       i++) {
+    usleep(100000);
+    ret = macvlan_create(cfg, netns, init_pid);
+  }
+
+  if (ret != last) {
+    if (ret == 1)
+      ds_log("[NET] Macvlan: eth0 on %s (%s mode)", cfg->macvlan_parent,
+             ds_macvlan_mode_name(cfg->macvlan_mode));
+    else if (ret == 0)
+      ds_warn("[NET] Macvlan: %s is not present - eth0 comes up once it is",
+              cfg->macvlan_parent);
+    else
+      ds_warn("[NET] Macvlan: could not create eth0 on %s: %s%s",
+              cfg->macvlan_parent, strerror(-ret),
+              ret == -EINVAL ? " (another container may hold it in passthru "
+                               "mode)"
+                             : "");
+  }
+  return last = ret;
+}
+
 /* setup_veth_child_side_named
  *
  * Called from internal_boot() INSIDE the container's new network namespace. */
@@ -1843,11 +2011,12 @@ int setup_veth_child_side_named(struct ds_config *cfg, const char *peer_name,
 static void setup_resolv_conf(struct ds_config *cfg) {
   const char *target;
 
-  /* Gateway mode with no explicit --dns: DNS belongs to the gateway (OpenWrt
-   * dnsmasq), advertised in the DHCP lease.  Droidspaces must NOT write a
-   * static resolv.conf or it would bypass the gateway's DNS filtering/caching.
-   */
-  if (cfg->net_mode == DS_NET_GATEWAY && !cfg->dns_servers[0]) {
+  /* Gateway or macvlan mode with no explicit --dns: DNS belongs to whoever
+   * serves the LAN (OpenWrt's dnsmasq, a home router), advertised in the DHCP
+   * lease.  Droidspaces must NOT write a static resolv.conf or it would bypass
+   * that DNS and its filtering/caching. */
+  if ((cfg->net_mode == DS_NET_GATEWAY || cfg->net_mode == DS_NET_MACVLAN) &&
+      !cfg->dns_servers[0]) {
     if (is_systemd_rootfs("/")) {
       /* systemd-resolved consumes the lease and publishes the real resolver. */
       target = "/run/systemd/resolve/resolv.conf";
@@ -1856,8 +2025,8 @@ static void setup_resolv_conf(struct ds_config *cfg) {
        * which writes the gateway-supplied nameserver from the lease.  Writing a
        * hardcoded 1.1.1.1/8.8.8.8 here would silently defeat the gateway's DNS
        * (adblock, split-horizon, etc.).  Pass --dns to override. */
-      ds_log("[NET] Gateway: leaving /etc/resolv.conf to the container's DHCP "
-             "client (gateway owns DNS)");
+      ds_log("[NET] Leaving /etc/resolv.conf to the container's DHCP client "
+             "(the LAN owns DNS)");
       return;
     }
   } else {
@@ -1923,10 +2092,11 @@ int fix_networking_rootfs(struct ds_config *cfg) {
     }
     write_file("/proc/sys/net/ipv6/conf/all/disable_ipv6", "1");
     write_file("/proc/sys/net/ipv6/conf/default/disable_ipv6", "1");
-  } else if (cfg->net_mode == DS_NET_NAT) {
+  } else if (cfg->net_mode == DS_NET_NAT || cfg->net_mode == DS_NET_MACVLAN) {
     /* Docker and friends turn on forwarding inside the container, and the
-     * kernel then ignores our RAs unless accept_ra is 2. Without this the
-     * IPv6 default route quietly expires half an hour after dockerd starts. */
+     * kernel then ignores RAs (ours, or the LAN router's) unless accept_ra is
+     * 2. Without this the IPv6 default route quietly expires half an hour
+     * after dockerd starts. */
     write_file("/proc/sys/net/ipv6/conf/default/accept_ra", "2");
     write_file("/proc/sys/net/ipv6/conf/eth0/accept_ra", "2");
   }

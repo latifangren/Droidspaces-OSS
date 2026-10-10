@@ -51,7 +51,8 @@ void print_usage(void) {
   printf(
       C_BOLD
       "Options (Networking):" C_RESET "\n"
-      "      --net=MODE            Modes: nat (default), host, none, gateway\n"
+      "      --net=MODE            Modes: nat (default), host, none, gateway, "
+      "macvlan\n"
       "      --gateway=NAME        Gateway container for --net=gateway\n"
       "      --gateway-net=NAME    Gateway LAN name/bridge suffix (default: "
       "lan)\n"
@@ -59,6 +60,8 @@ void print_usage(void) {
       "eth1)\n"
       "      --gateway-bridge=BR   Host bridge for gateway LAN (default: "
       "ds-NAME)\n"
+      "      --macvlan-parent=IF   Host NIC for --net=macvlan, e.g. eth0\n"
+      "      --macvlan-mode=MODE   bridge (default), private, vepa, passthru\n"
       "      --nat-ip=IP           Assign a fixed IP in 172.28.*.* range (nat "
       "mode)\n"
       "      --upstream IFACE      Pin NAT WAN to interface(s); disables "
@@ -280,13 +283,12 @@ static int auto_resolve_container_name(struct ds_config *cfg) {
 /* Command Dispatch */
 
 static void enforce_nat_safety(struct ds_config *cfg) {
-  if (cfg->net_mode == DS_NET_NAT || cfg->net_mode == DS_NET_NONE ||
-      cfg->net_mode == DS_NET_GATEWAY) {
+  if (cfg->net_mode != DS_NET_HOST) {
     if (!check_ns(CLONE_NEWNET, "net")) {
       printf("\n" C_RED C_BOLD
              "[ FATAL: NETWORK NAMESPACE UNSUPPORTED ]" C_RESET "\n\n");
       ds_error("Kernel does not support CLONE_NEWNET (network namespaces).");
-      ds_log("Cannot use --net=nat, --net=none, or --net=gateway.");
+      ds_log("Cannot use --net=nat, none, gateway or macvlan.");
       ds_log("Tip: Use --net=host for shared host networking.");
       exit(EXIT_FAILURE);
     }
@@ -383,6 +385,8 @@ static struct option long_options[] = {
     {"gateway-net", required_argument, 0, 275},
     {"gateway-iface", required_argument, 0, 276},
     {"gateway-bridge", required_argument, 0, 277},
+    {"macvlan-parent", required_argument, 0, 281},
+    {"macvlan-mode", required_argument, 0, 282},
     {"reset", no_argument, 0, 256},
     {"format", no_argument, 0, 265},
     {"memory", required_argument, 0, 266},
@@ -490,6 +494,22 @@ int ds_apply_cli_overrides(int argc, char **argv, struct ds_config *cfg,
     case 277:
       safe_strncpy(cfg->gateway_bridge, optarg, sizeof(cfg->gateway_bridge));
       break;
+    case 281:
+      if (strlen(optarg) >= IFNAMSIZ) {
+        ds_error("--macvlan-parent interface name is too long: %s", optarg);
+        return -1;
+      }
+      safe_strncpy(cfg->macvlan_parent, optarg, sizeof(cfg->macvlan_parent));
+      break;
+    case 282:
+      cfg->macvlan_mode = ds_parse_macvlan_mode(optarg);
+      if (!cfg->macvlan_mode) {
+        ds_error("Unknown --macvlan-mode '%s'. Valid options: bridge, "
+                 "private, vepa, passthru",
+                 optarg);
+        return -1;
+      }
+      break;
     case 'I':
       cfg->disable_ipv6 = 1;
       break;
@@ -561,24 +581,18 @@ int ds_apply_cli_overrides(int argc, char **argv, struct ds_config *cfg,
     case 'v':
       print_usage();
       return 1;
-    case 257:
-      if (strcmp(optarg, "nat") == 0)
-        cli_net_mode = DS_NET_NAT;
-      else if (strcmp(optarg, "none") == 0)
-        cli_net_mode = DS_NET_NONE;
-      else if (strcmp(optarg, "host") == 0)
-        cli_net_mode = DS_NET_HOST;
-      else if (strcmp(optarg, "gateway") == 0 ||
-               strcmp(optarg, "delegated-gateway") == 0)
-        cli_net_mode = DS_NET_GATEWAY;
-      else {
+    case 257: {
+      int mode = ds_parse_net_mode(optarg);
+      if (mode < 0) {
         ds_error("Unknown network mode: '%s'. Valid options: host, nat, none, "
-                 "gateway",
+                 "gateway, macvlan",
                  optarg);
         return -1;
       }
+      cli_net_mode = (enum ds_net_mode)mode;
       cfg->net_mode = cli_net_mode;
       break;
+    }
     case 264:
       parse_privileged(optarg, cfg);
       break;
@@ -934,22 +948,15 @@ int main(int argc, char **argv) {
     }
     /* Discover --net early so kernel probe can run before config load */
     if (opt == 257) {
-      if (strcmp(optarg, "nat") == 0)
-        cfg.net_mode = DS_NET_NAT;
-      else if (strcmp(optarg, "none") == 0)
-        cfg.net_mode = DS_NET_NONE;
-      else if (strcmp(optarg, "host") == 0)
-        cfg.net_mode = DS_NET_HOST;
-      else if (strcmp(optarg, "gateway") == 0 ||
-               strcmp(optarg, "delegated-gateway") == 0)
-        cfg.net_mode = DS_NET_GATEWAY;
-      else {
+      int mode = ds_parse_net_mode(optarg);
+      if (mode < 0) {
         ds_error("Unknown network mode: '%s'. Valid options: host, nat, none, "
-                 "gateway",
+                 "gateway, macvlan",
                  optarg);
         ret = 1;
         goto cleanup;
       }
+      cfg.net_mode = (enum ds_net_mode)mode;
     }
   }
   optind = 0; /* Reset for next steps */

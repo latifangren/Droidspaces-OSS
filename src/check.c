@@ -414,6 +414,9 @@ int check_requirements_detailed(int format_output) {
   print_ds_check("veth", "Veth pair support",
                  "Required for --net=nat; no fallback exists if absent",
                  check_veth_support(), "OPT");
+  print_ds_check("macvlan", "Macvlan support",
+                 "CONFIG_MACVLAN; required for --net=macvlan",
+                 is_root && ds_nl_probe_macvlan(), "OPT");
   /* An IPv6 stack alone is not enough for NAT mode, which also needs the
    * IPv6 nat table. This is the probe the runtime runs before it gives a
    * container IPv6, so it is the only IPv6 line worth showing. */

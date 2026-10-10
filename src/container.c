@@ -402,6 +402,11 @@ static int start_rootfs_locked(struct ds_config *cfg, int *lock_fd,
   int sync_pipe[2] = {-1, -1}; /* read by cleanup: set before any goto */
   pid_t tweaks_pid = -1;       /* the android_optimizations(1) helper */
 
+  /* Here and not with the other network checks in main.c: a restart reloads
+   * its config after those ran, and this is the one both paths go through. */
+  if (cfg->net_mode == DS_NET_MACVLAN && ds_net_macvlan_check(cfg) < 0)
+    return -1;
+
   /* 0. Restart: pick the preserved mount back up. If it is gone after all,
    *    this is an ordinary start that mounts the image again. */
   if (reuse_mount) {
@@ -1667,6 +1672,9 @@ int show_info(struct ds_config *cfg, int trust_cfg_pid) {
     case DS_NET_GATEWAY:
       net = "gateway";
       break;
+    case DS_NET_MACVLAN:
+      net = "macvlan";
+      break;
     default:
       net = "host";
       break;
@@ -1696,6 +1704,10 @@ int show_info(struct ds_config *cfg, int trust_cfg_pid) {
         ds_json_str("gateway_bridge", cfg->gateway_bridge, &first);
       ds_json_str("gateway_iface",
                   cfg->gateway_lan_ifname[0] ? cfg->gateway_lan_ifname : "eth1",
+                  &first);
+    } else if (cfg->net_mode == DS_NET_MACVLAN) {
+      ds_json_str("macvlan_parent", cfg->macvlan_parent, &first);
+      ds_json_str("macvlan_mode", ds_macvlan_mode_name(cfg->macvlan_mode),
                   &first);
     }
 
@@ -1817,6 +1829,9 @@ int show_info(struct ds_config *cfg, int trust_cfg_pid) {
     case DS_NET_GATEWAY:
       net = "gateway";
       break;
+    case DS_NET_MACVLAN:
+      net = "macvlan";
+      break;
     default:
       net = "host";
       break;
@@ -1828,6 +1843,12 @@ int show_info(struct ds_config *cfg, int trust_cfg_pid) {
     if (cfg->net_mode == DS_NET_GATEWAY) {
       printf("  Gateway: %s (%s)\n", cfg->gateway_container,
              cfg->gateway_net[0] ? cfg->gateway_net : "lan");
+      feat_count++;
+    }
+
+    if (cfg->net_mode == DS_NET_MACVLAN) {
+      printf("  Macvlan: %s (%s)\n", cfg->macvlan_parent,
+             ds_macvlan_mode_name(cfg->macvlan_mode));
       feat_count++;
     }
 
