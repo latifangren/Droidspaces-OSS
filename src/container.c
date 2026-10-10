@@ -323,8 +323,10 @@ void cleanup_container_resources(struct ds_config *cfg, pid_t pid,
       unlink(global_pidfile);
   }
 
-  /* Network cleanup: remove host veth and owned network state */
-  if (cfg->net_mode == DS_NET_NAT || cfg->net_mode == DS_NET_GATEWAY) {
+  /* Network cleanup: remove host veth and owned network state. Any isolated
+   * mode can be someone's gateway (an OpenWrt in --net=none, say), and its
+   * LAN cables must go with it, so this is not limited to NAT and gateway. */
+  if (cfg->net_mode != DS_NET_HOST) {
     ds_net_cleanup(cfg, pid > 0 ? pid : cfg->container_pid);
   }
 
