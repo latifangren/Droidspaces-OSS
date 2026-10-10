@@ -203,7 +203,7 @@ fun InitServiceScreen(
             snackbarHost = { DsSnackbarHost(snackbarHostState) },
             containerColor = Color.Transparent
         ) { padding ->
-            ClearFocusOnClickOutside(modifier = Modifier.padding(padding).fillMaxSize()) {
+            Box(modifier = Modifier.padding(padding).fillMaxSize()) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     when (screenState) {
                         is InitScreenState.Loading -> FullScreenLoading(message = context.getString(R.string.fetching_services))

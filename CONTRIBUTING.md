@@ -260,7 +260,7 @@ for the case where nothing here fits and you have to build something new.
 | `DsMenuTheme { }` + `Modifier.dsMenuBorder()` | `ui/component/DsMenuTheme.kt` | Any `DropdownMenu` that needs the opaque menu surface. `DsDropdown` already applies it |
 | `DsTextFieldDefaults.colors()` / `.surfaceColors()` | `ui/component/DsTextFieldDefaults.kt` | Every `OutlinedTextField`. `colors()` on screens, `surfaceColors()` inside dialogs |
 | `MonoField(value, onValueChange, label, ...)` | `ui/component/MonoField.kt` | Every single-line field for a value the backend reads verbatim: paths, interface names, flags, DNS. Number fields and the env editor are their own |
-| `FocusUtils`, `rememberClearFocus()`, `ClearFocusOnClickOutside` | `ui/util/FocusUtils.kt` | IME actions and dismissing the keyboard on outside taps |
+| `FocusUtils`, `rememberClearFocus()`, `ClearFocusOnClickOutside` | `ui/util/FocusUtils.kt` | IME actions and dismissing the keyboard. `MainActivity` already clears focus on an unconsumed tap on every screen; `ClearFocusOnClickOutside` is only for a sheet that is its own window |
 
 ### Android: dialogs
 

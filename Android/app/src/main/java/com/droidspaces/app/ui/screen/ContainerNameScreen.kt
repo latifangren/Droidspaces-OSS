@@ -23,8 +23,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import com.droidspaces.app.util.ValidationUtils
 import com.droidspaces.app.util.ContainerManager
 import com.droidspaces.app.ui.util.FocusUtils
@@ -128,12 +126,6 @@ fun ContainerNameScreen(
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding)
                 .imePadding()
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() }
-                ) {
-                    clearFocus()
-                }
         ) {
             Column(
                 modifier = Modifier
