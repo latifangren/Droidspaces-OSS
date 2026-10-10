@@ -1953,6 +1953,9 @@ int fix_networking_rootfs(struct ds_config *cfg) {
  *   RTM_NEWLINK / RTM_DELLINK   - interface state change (UP/RUNNING/DOWN)
  *   RTM_NEWADDR / RTM_DELADDR   - IPv4 address assigned or removed
  *
+ * With NAT66 on, IPv6 rule and route changes are watched too: on a carrier
+ * with no IPv4 the uplink comes and goes with an IPv6 default route.
+ *
  * A 1.5s heartbeat covers devices with broken netlink notifications and
  * re-asserts ip_forward, which Android periodically resets. */
 
@@ -2311,6 +2314,8 @@ static void *route_monitor_loop(void *arg) {
    *                      groups; the bit is 1 << (RTNLGRP_IPV4_RULE - 1). */
   sa.nl_groups = RTMGRP_LINK | RTMGRP_IPV4_IFADDR | RTMGRP_IPV4_ROUTE |
                  (1u << (RTNLGRP_IPV4_RULE - 1));
+  if (g_host_nat6)
+    sa.nl_groups |= RTMGRP_IPV6_ROUTE | (1u << (RTNLGRP_IPV6_RULE - 1));
 
   if (bind(sock, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
     ds_warn("[NET] Route monitor: failed to bind netlink socket: %s",
@@ -2443,9 +2448,12 @@ static void *route_monitor_loop(void *arg) {
       } else if (h->nlmsg_type == RTM_NEWROUTE ||
                  h->nlmsg_type == RTM_DELROUTE) {
         /* Default route added/removed in some table.  Filter our own
-         * subnet/bridge routes by output interface. */
+         * subnet/bridge routes by output interface.  IPv6 also announces
+         * every /64, neighbour and cached clone; only a route as short as
+         * the ones uplink detection accepts can change the uplink. */
         struct rtmsg *rtm = NLMSG_DATA(h);
-        if (rtm->rtm_family == AF_INET) {
+        if (rtm->rtm_family == AF_INET ||
+            (rtm->rtm_family == AF_INET6 && rtm->rtm_dst_len < 8)) {
           int oif = 0;
           struct rtattr *rta = RTM_RTA(rtm);
           int rlen = (int)RTM_PAYLOAD(h);
