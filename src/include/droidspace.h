@@ -809,7 +809,6 @@ int ds_nl_add_rule4(ds_nl_ctx_t *ctx, uint32_t src_be, uint8_t src_len,
                     uint32_t dst_be, uint8_t dst_len, int table, int priority);
 int ds_nl_del_rule4(ds_nl_ctx_t *ctx, uint32_t src_be, uint8_t src_len,
                     uint32_t dst_be, uint8_t dst_len, int table, int priority);
-void ds_nl_flush_stale_veths(ds_nl_ctx_t *ctx, const char *prefix);
 int ds_nl_count_ifaces_with_prefix(ds_nl_ctx_t *ctx, const char *prefix);
 /* Count links enslaved to `bridge` whose name starts with `prefix`.
  * Returns 0 if the bridge does not exist. */
