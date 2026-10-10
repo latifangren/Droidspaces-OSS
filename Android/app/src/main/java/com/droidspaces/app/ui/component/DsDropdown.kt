@@ -33,6 +33,9 @@ fun <T> DsDropdown(
     enabled: Boolean = true
 ) {
     var expanded by remember { mutableStateOf(false) }
+    // The menu fades out after a pick, and moving the check during that fade shifts two rows
+    // at once. The open menu shows the selection it opened with, the field shows the new one.
+    var menuSelected by remember { mutableStateOf(selected) }
 
     val fieldShape = RoundedCornerShape(16.dp)
     val fieldColors = DsTextFieldDefaults.colors()
@@ -41,6 +44,7 @@ fun <T> DsDropdown(
         expanded = expanded && enabled,
         onExpandedChange = {
             if (!enabled) return@ExposedDropdownMenuBox
+            if (it) menuSelected = selected
             expanded = it
         },
         modifier = modifier.fillMaxWidth()
@@ -78,7 +82,7 @@ fun <T> DsDropdown(
                             onSelect(option)
                             expanded = false
                         },
-                        leadingIcon = if (option == selected) {
+                        leadingIcon = if (option == menuSelected) {
                             {
                                 Icon(
                                     Icons.Default.Check,
