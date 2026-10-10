@@ -14,7 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
@@ -33,7 +33,6 @@ fun <T> DsDropdown(
     enabled: Boolean = true
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val focusManager = LocalFocusManager.current
 
     val fieldShape = RoundedCornerShape(16.dp)
     val fieldColors = DsTextFieldDefaults.colors()
@@ -43,7 +42,6 @@ fun <T> DsDropdown(
         onExpandedChange = {
             if (!enabled) return@ExposedDropdownMenuBox
             expanded = it
-            if (!it) focusManager.clearFocus()
         },
         modifier = modifier.fillMaxWidth()
     ) {
@@ -61,15 +59,16 @@ fun <T> DsDropdown(
             colors = fieldColors,
             modifier = Modifier
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                // The text field takes focus from a tap only after the double-tap timeout, so a
+                // tap that closes the menu would re-focus it and leave it outlined. Tying focus
+                // to the menu drops it on close and refuses that late request.
+                .focusProperties { canFocus = expanded }
                 .fillMaxWidth()
         )
         DsMenuTheme {
             ExposedDropdownMenu(
                 expanded = expanded,
-                onDismissRequest = { 
-                    expanded = false
-                    focusManager.clearFocus()
-                },
+                onDismissRequest = { expanded = false },
                 modifier = Modifier.dsMenuBorder()
             ) {
                 options.forEach { option ->
@@ -78,7 +77,6 @@ fun <T> DsDropdown(
                         onClick = {
                             onSelect(option)
                             expanded = false
-                            focusManager.clearFocus()
                         },
                         leadingIcon = if (option == selected) {
                             {
