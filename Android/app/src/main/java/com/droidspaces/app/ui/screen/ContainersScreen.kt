@@ -44,6 +44,8 @@ import com.droidspaces.app.ui.util.ProgressDialog
 import com.droidspaces.app.ui.util.ErrorLogsDialog
 import com.droidspaces.app.ui.util.LoadingIndicator
 import com.droidspaces.app.ui.util.LoadingSize
+import com.droidspaces.app.ui.util.AnimatedListEntry
+import com.droidspaces.app.ui.util.rememberAnimatedEntries
 import com.droidspaces.app.ui.util.showError
 import com.droidspaces.app.ui.util.showSuccess
 import androidx.compose.material3.SnackbarHostState
@@ -143,6 +145,8 @@ fun ContainersScreen(
 
     // Get containers from ViewModel - single source of truth (KernelSU pattern)
     val containers = containerViewModel.containerList
+    // Removed cards stay here until they finish leaving, so the empty state waits for them.
+    val entries = rememberAnimatedEntries(containers) { it.name }
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -158,7 +162,7 @@ fun ContainersScreen(
             !isKernelSupported -> {
                 KernelUnsupportedState(modifier = Modifier.padding(bottom = emptyStateBottomInset))
             }
-            containers.isEmpty() -> {
+            entries.isEmpty() -> {
                 if (containerViewModel.isRefreshing) {
                     Box(
                         modifier = Modifier.fillMaxSize().padding(bottom = emptyStateBottomInset),
@@ -191,89 +195,89 @@ fun ContainersScreen(
                             }
                         )
                         .padding(horizontal = 16.dp),
-                    contentPadding = PaddingValues(top = 8.dp, bottom = 120.dp), // Clear floating tab bar
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    // Each card carries its own 16dp gap (AnimatedListEntry), hence 104 + 16.
+                    contentPadding = PaddingValues(top = 8.dp, bottom = 104.dp), // Clear floating tab bar
                 ) {
-                    items(containers, key = { it.name }) { container ->
+                    items(entries, key = { it.key }) { entry ->
+                        val container = entry.item
                         // Console button is always visible - logs persist for each container
                         val isRunning = opsViewModel.runningOperationContainer == container.name
 
-                        // No animateItemPlacement here: a card animates its own height when
-                        // its drawer opens, and a placement animation makes the card below
-                        // chase that edge 200ms behind, so the two overlap all the way down.
-                        ContainerCard(
-                            container = container,
-                            isOperationRunning = isRunning,
-                            isExpanded = expandedContainerName == container.name,
-                            actions = ContainerCardActions(
-                            onToggleExpand = {
-                                onExpandedContainerNameChange(if (expandedContainerName == container.name) null else container.name)
-                            },
-                             onShowLogs = {
-                                opsViewModel.showLogViewerFor = container.name
-                            },
-                            onStart = {
-                                scope.launch {
-                                    opsViewModel.executeOperation(
-                                        container, "start",
-                                        onRefresh = { containerViewModel.refresh() },
-                                        onClearUsage = { systemStatsViewModel.clearContainerUsage(it) },
-                                        onFailureSnackbar = { msg -> scope.launch { snackbarHostState.showSnackbar(msg, duration = SnackbarDuration.Long) } }
-                                    )
+                        AnimatedListEntry(entry) {
+                            ContainerCard(
+                                container = container,
+                                isOperationRunning = isRunning,
+                                isExpanded = expandedContainerName == container.name,
+                                actions = ContainerCardActions(
+                                onToggleExpand = {
+                                    onExpandedContainerNameChange(if (expandedContainerName == container.name) null else container.name)
+                                },
+                                 onShowLogs = {
+                                    opsViewModel.showLogViewerFor = container.name
+                                },
+                                onStart = {
+                                    scope.launch {
+                                        opsViewModel.executeOperation(
+                                            container, "start",
+                                            onRefresh = { containerViewModel.refresh() },
+                                            onClearUsage = { systemStatsViewModel.clearContainerUsage(it) },
+                                            onFailureSnackbar = { msg -> scope.launch { snackbarHostState.showSnackbar(msg, duration = SnackbarDuration.Long) } }
+                                        )
+                                    }
+                                },
+                                onStop = {
+                                    scope.launch {
+                                        opsViewModel.executeOperation(
+                                            container, "stop",
+                                            onRefresh = { containerViewModel.refresh() },
+                                            onClearUsage = { systemStatsViewModel.clearContainerUsage(it) },
+                                            onFailureSnackbar = { msg -> scope.launch { snackbarHostState.showSnackbar(msg, duration = SnackbarDuration.Long) } }
+                                        )
+                                    }
+                                },
+                                onRestart = {
+                                    scope.launch {
+                                        opsViewModel.executeOperation(
+                                            container, "restart",
+                                            onRefresh = { containerViewModel.refresh() },
+                                            onClearUsage = { systemStatsViewModel.clearContainerUsage(it) },
+                                            onFailureSnackbar = { msg -> scope.launch { snackbarHostState.showSnackbar(msg, duration = SnackbarDuration.Long) } }
+                                        )
+                                    }
+                                },
+                                onEdit = {
+                                    onExpandedContainerNameChange(null)
+                                    onNavigateToEditContainer(container.name)
+                                },
+                                onEnter = {
+                                    onNavigateToContainerDetails(container.name)
+                                },
+                                onUninstall = {
+                                    onExpandedContainerNameChange(null)
+                                    showUninstallConfirmation = container
+                                },
+                                onMigrate = {
+                                    onExpandedContainerNameChange(null)
+                                    pendingSparseOperation = SparseOperation.Migrate(container)
+                                },
+                                onResize = {
+                                    onExpandedContainerNameChange(null)
+                                    pendingSparseOperation = SparseOperation.Resize(container)
+                                },
+                                onExport = {
+                                    onExpandedContainerNameChange(null)
+                                    // Generate filename: <name>_yyyyMMdd_HHmmss.tar.gz
+                                    val timestamp = java.text.SimpleDateFormat(
+                                        "yyyyMMdd_HHmmss",
+                                        java.util.Locale.US
+                                    ).format(java.util.Date())
+                                    val fileName = "${container.name}_${timestamp}.tar.gz"
+                                    pendingExportContainer = container
+                                    exportFileLauncher.launch(fileName)
                                 }
-                            },
-                            onStop = {
-                                scope.launch {
-                                    opsViewModel.executeOperation(
-                                        container, "stop",
-                                        onRefresh = { containerViewModel.refresh() },
-                                        onClearUsage = { systemStatsViewModel.clearContainerUsage(it) },
-                                        onFailureSnackbar = { msg -> scope.launch { snackbarHostState.showSnackbar(msg, duration = SnackbarDuration.Long) } }
-                                    )
-                                }
-                            },
-                            onRestart = {
-                                scope.launch {
-                                    opsViewModel.executeOperation(
-                                        container, "restart",
-                                        onRefresh = { containerViewModel.refresh() },
-                                        onClearUsage = { systemStatsViewModel.clearContainerUsage(it) },
-                                        onFailureSnackbar = { msg -> scope.launch { snackbarHostState.showSnackbar(msg, duration = SnackbarDuration.Long) } }
-                                    )
-                                }
-                            },
-                            onEdit = {
-                                onExpandedContainerNameChange(null)
-                                onNavigateToEditContainer(container.name)
-                            },
-                            onEnter = {
-                                onNavigateToContainerDetails(container.name)
-                            },
-                            onUninstall = {
-                                onExpandedContainerNameChange(null)
-                                showUninstallConfirmation = container
-                            },
-                            onMigrate = {
-                                onExpandedContainerNameChange(null)
-                                pendingSparseOperation = SparseOperation.Migrate(container)
-                            },
-                            onResize = {
-                                onExpandedContainerNameChange(null)
-                                pendingSparseOperation = SparseOperation.Resize(container)
-                            },
-                            onExport = {
-                                onExpandedContainerNameChange(null)
-                                // Generate filename: <name>_yyyyMMdd_HHmmss.tar.gz
-                                val timestamp = java.text.SimpleDateFormat(
-                                    "yyyyMMdd_HHmmss",
-                                    java.util.Locale.US
-                                ).format(java.util.Date())
-                                val fileName = "${container.name}_${timestamp}.tar.gz"
-                                pendingExportContainer = container
-                                exportFileLauncher.launch(fileName)
-                            }
+                                )
                             )
-                        )
+                        }
                     }
                 }
             }

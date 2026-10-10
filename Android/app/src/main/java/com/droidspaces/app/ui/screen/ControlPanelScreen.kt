@@ -23,6 +23,8 @@ import com.droidspaces.app.ui.component.KernelUnsupportedState
 import com.droidspaces.app.ui.component.RootUnavailableState
 import com.droidspaces.app.ui.component.PullToRefreshWrapper
 import com.droidspaces.app.ui.component.RunningContainerCard
+import com.droidspaces.app.ui.util.AnimatedListEntry
+import com.droidspaces.app.ui.util.rememberAnimatedEntries
 import com.droidspaces.app.ui.viewmodel.ContainerViewModel
 import com.droidspaces.app.ui.viewmodel.SystemStatsViewModel
 import androidx.compose.ui.platform.LocalContext
@@ -51,6 +53,7 @@ fun ControlPanelScreen(
 
     // Get running containers - derived from ViewModel state
     val runningContainers = containerViewModel.containerList.filter { it.isRunning }
+    val entries = rememberAnimatedEntries(runningContainers) { it.name }
 
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -61,7 +64,9 @@ fun ControlPanelScreen(
     // Restarts whenever the running container set changes.
     LaunchedEffect(runningContainers) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            systemStatsViewModel.monitorContainers(runningContainers)
+            // A container that died on its own (poweroff inside it) is only noticed by
+            // this poll, so it has to tell the list, or its card stays up with no stats.
+            systemStatsViewModel.monitorContainers(runningContainers, onStopped = containerViewModel::refresh)
         }
     }
 
@@ -81,7 +86,7 @@ fun ControlPanelScreen(
                 KernelUnsupportedState(modifier = Modifier.padding(bottom = emptyStateBottomInset))
             }
             else -> {
-                if (runningContainers.isEmpty()) {
+                if (entries.isEmpty()) {
                     EmptyState(
                         icon = Icons.Default.Dashboard,
                         title = context.getString(R.string.no_containers_running),
@@ -96,20 +101,26 @@ fun ControlPanelScreen(
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
                             .padding(horizontal = 16.dp)
-                            .padding(top = 8.dp, bottom = 120.dp), // Clear floating tab bar
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                            // Each card carries its own 16dp gap (AnimatedListEntry), hence 104 + 16.
+                            .padding(top = 8.dp, bottom = 104.dp), // Clear floating tab bar
                     ) {
-                        runningContainers.forEach { container ->
-                            RunningContainerCard(
-                                container = container,
-                                onEnter = {
-                                    onNavigateToContainerDetails(container.name)
-                                },
-                                onTerminalClick = {
-                                    onNavigateToTerminal(container.name)
-                                },
-                                osInfo = containerUsageMap[container.name],
-                            )
+                        entries.forEach { entry ->
+                            val container = entry.item
+                            // Keyed, so a card's state stays with its container when one leaves.
+                            key(entry.key) {
+                                AnimatedListEntry(entry) {
+                                    RunningContainerCard(
+                                        container = container,
+                                        onEnter = {
+                                            onNavigateToContainerDetails(container.name)
+                                        },
+                                        onTerminalClick = {
+                                            onNavigateToTerminal(container.name)
+                                        },
+                                        osInfo = containerUsageMap[container.name],
+                                    )
+                                }
+                            }
                         }
                     }
                 }
