@@ -1136,6 +1136,14 @@ int setup_veth_host_side(struct ds_config *cfg, pid_t child_pid) {
     if (ds_nl_link_up(ctx, veth_host) < 0)
       ds_warn("[NET] Failed to bring up %s", veth_host);
 
+    /* The guest holds a /16 and ARPs for its siblings as if they were on
+     * its link. Nothing shares that link, so without proxy ARP the host
+     * never answers and containers cannot reach each other. */
+    char proxy_arp[128];
+    snprintf(proxy_arp, sizeof(proxy_arp),
+             "/proc/sys/net/ipv4/conf/%s/proxy_arp", veth_host);
+    write_file(proxy_arp, "1");
+
     /* Add host route for the container's static IP to this veth.
      * cfg->static_nat_ip is already resolved and persisted before fork. */
     struct in_addr peer_in;
