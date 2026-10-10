@@ -43,6 +43,7 @@ import com.droidspaces.app.ui.component.DialogFooterRow
 import com.droidspaces.app.ui.component.SectionHeader
 import com.droidspaces.app.ui.component.AccentColorPicker
 import com.droidspaces.app.ui.component.BugReportDialog
+import com.droidspaces.app.ui.component.SettingsGroup
 import com.droidspaces.app.ui.component.SwitchItem
 import com.droidspaces.app.ui.theme.ThemePalette
 import com.droidspaces.app.ui.theme.rememberThemeState
@@ -164,13 +165,7 @@ fun SettingsScreen(
                 modifier = Modifier.padding(start = 24.dp, bottom = 8.dp, top = 8.dp)
             )
 
-            Surface(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(24.dp),
-                color = if (darkTheme) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainer,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
-            ) {
-                Column {
+            SettingsGroup {
                     ListItem(colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 leadingContent = {
                     Icon(
@@ -295,7 +290,6 @@ fun SettingsScreen(
                 onNavigateToRequirements = onNavigateToRequirements
             )
                 }
-            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -305,13 +299,7 @@ fun SettingsScreen(
                 modifier = Modifier.padding(start = 24.dp, bottom = 8.dp, top = 8.dp)
             )
 
-            Surface(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(24.dp),
-                color = if (darkTheme) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainer,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
-            ) {
-                Column {
+            SettingsGroup {
                     // Language Picker
             val currentLanguageDisplay = remember(currentAppLocale) {
                 val currentLanguageCode = LocaleHelper.getCurrentLanguageCode()
@@ -446,7 +434,6 @@ fun SettingsScreen(
                 modifier = Modifier.clickable { onNavigateToTerminalAppearance() }
             )
                 }
-            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -456,12 +443,7 @@ fun SettingsScreen(
                 modifier = Modifier.padding(start = 24.dp, bottom = 8.dp, top = 8.dp)
             )
 
-            Surface(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(24.dp),
-                color = if (darkTheme) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainer,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
-            ) {
+            SettingsGroup {
                 var checkAppUpdates by remember { mutableStateOf(prefsManager.checkAppUpdates) }
                 SwitchItem(
                     icon = Icons.Default.SystemUpdate,
@@ -485,13 +467,7 @@ fun SettingsScreen(
                 modifier = Modifier.padding(start = 24.dp, bottom = 8.dp, top = 8.dp)
             )
 
-            Surface(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-
-                shape = RoundedCornerShape(24.dp),
-                color = if (darkTheme) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainer,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
-            ) {
+            SettingsGroup {
                 ListItem(colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 leadingContent = {
                     Icon(
@@ -548,12 +524,7 @@ fun SettingsScreen(
                     modifier = Modifier.padding(start = 24.dp, bottom = 8.dp, top = 8.dp)
                 )
 
-                Surface(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    color = if (darkTheme) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainer,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
-                ) {
+                SettingsGroup {
                     SwitchItem(
                         icon = Icons.Default.Memory,
                         title = context.getString(R.string.treat_as_64bit),
@@ -578,12 +549,7 @@ fun SettingsScreen(
                 modifier = Modifier.padding(start = 24.dp, bottom = 8.dp, top = 8.dp)
             )
 
-            Surface(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(24.dp),
-                color = if (darkTheme) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainer,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
-            ) {
+            SettingsGroup {
                 ListItem(colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 leadingContent = {
                     Icon(

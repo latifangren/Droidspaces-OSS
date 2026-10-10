@@ -49,9 +49,15 @@ import com.droidspaces.app.ui.viewmodel.RootfsRepoViewModel
 import com.droidspaces.app.util.IconUtils
 import com.droidspaces.app.util.RootfsAsset
 
+/** The sheet arrives on the standard motion, like every sheet; see [StandardMotion]. */
+@Composable
+fun RootfsRepoSheet(onDismiss: () -> Unit, onInstall: (Uri) -> Unit) {
+    StandardMotion { RootfsRepoSheetContent(onDismiss, onInstall) }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RootfsRepoSheet(
+private fun RootfsRepoSheetContent(
     onDismiss: () -> Unit,
     onInstall: (Uri) -> Unit
 ) {

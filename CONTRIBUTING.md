@@ -246,17 +246,20 @@ for the case where nothing here fits and you have to build something new.
 
 | Symbol | Path | Use it when |
 | --- | --- | --- |
-| `ContainerConfigForm(state, onStateChange, ...)` | `ui/component/ContainerConfigForm.kt` | Any screen that edits container settings. Add new options inside this file, never in a second form |
+| `ContainerConfigHost(title, onBack, bottomBar, state, onStateChange, ...)` | `ui/component/ContainerConfigHost.kt` | Any screen that edits container settings. It hosts the root form and its pages in one destination |
+| `ContainerConfigForm(state, onStateChange, onOpenPage, ...)` | `ui/component/ContainerConfigForm.kt` | The root of the config screen. Add new options inside this file or one of its pages, never in a second form |
+| `DraftPageScaffold(title, dirty, canSave, onSave, onClose, confirmLabel) { }` | `ui/component/ContainerConfigHost.kt` | A config page: a draft kept on back while the page's rules pass, a discard prompt when they fail. `confirmLabel` adds an explicit button instead. Built on `ConfigPageScaffold` |
 | `ContainerConfigState` | `util/ContainerConfigState.kt` | The single source of truth for editable config. Add a field here, not to a parallel state class |
 | `ContainerInfo.toConfigState()` / `.withConfig(state)` | `util/ContainerConfigState.kt` | Prefill the form from a container, or write edits back |
 | `InitServiceScreen(containerName, titleRes, isAvailable, fetchRows, filters, ...)` | `ui/screen/InitServiceScreen.kt` | Supporting a new init system. Supply the lambdas, do not write a new screen |
 | `InitServiceRow`, `InitServiceUiStatus`, `InitCommandResult`, `InitServiceMenuAction`, `InitServiceFilterChip` | `ui/screen/InitServiceScreen.kt` | Mapping a manager's service list into the shared screen. Status colors and filter counts derive from these, so they cannot drift |
-| `GatewaySettingsSection(visible, config, onConfigChange, ...)` + `GatewayConfig` | `ui/component/GatewaySettingsSection.kt` | The gateway networking block. Already embedded in the config form |
-| `PortForwardingList(portForwards, onPortForwardsChange)` | `ui/component/PortForwardingList.kt` | Editable port forward list, add dialog included |
-| `UpstreamInterfaceList(upstreamInterfaces, onInterfacesChange)` | `ui/component/UpstreamInterfaceList.kt` | Editable upstream interface chips |
+| `NetworkModePage(...)` | `ui/component/NetworkModePage.kt` | The network mode list and each mode's settings (NAT, gateway, macvlan). Add a mode's settings here |
+| `UpstreamPickerSheet`, `HostInterfaceSheet`, `AddPortForwardSheet` | `ui/component/NetworkSheets.kt` | Adding to the network page's lists |
+| `EnvironmentVariablesPage`, `PrivilegedModePage`, `BindMountsPage` | `ui/component/` | The config pages that hold a draft |
 | `DsDropdown(label, selected, options, displayName, onSelect, ...)` | `ui/component/DsDropdown.kt` | Any select field. Never hand-roll `ExposedDropdownMenuBox` |
 | `DsMenuTheme { }` + `Modifier.dsMenuBorder()` | `ui/component/DsMenuTheme.kt` | Any `DropdownMenu` that needs the opaque menu surface. `DsDropdown` already applies it |
 | `DsTextFieldDefaults.colors()` / `.surfaceColors()` | `ui/component/DsTextFieldDefaults.kt` | Every `OutlinedTextField`. `colors()` on screens, `surfaceColors()` inside dialogs |
+| `MonoField(value, onValueChange, label, ...)` | `ui/component/MonoField.kt` | Every single-line field for a value the backend reads verbatim: paths, interface names, flags, DNS. Number fields and the env editor are their own |
 | `FocusUtils`, `rememberClearFocus()`, `ClearFocusOnClickOutside` | `ui/util/FocusUtils.kt` | IME actions and dismissing the keyboard on outside taps |
 
 ### Android: dialogs
@@ -268,8 +271,9 @@ for the case where nothing here fits and you have to build something new.
 | `DialogCloseButton(onClick, enabled)` | `ui/component/DialogCloseButton.kt` | The 36.dp close square in a dialog's header row, for info pages that close from the top (terminal log viewer, About) |
 | `DialogFooterRow(dismissLabel, confirmLabel, onDismiss, onConfirm, confirmEnabled, destructive)` | `ui/component/DialogFooterRow.kt` | Every dialog's cancel and confirm row, thirteen call sites. Pass `destructive = true` for a delete or a wipe, never a colour |
 | `FilePickerDialog(onDismiss, onConfirm, title, showFiles)` | `ui/component/FilePickerDialog.kt` | Picking a host path or file |
-| `EnvironmentVariablesDialog(initialContent, onConfirm, onDismiss, ...)` | `ui/component/EnvironmentVariablesDialog.kt` | Key and value environment editor |
-| `PrivilegedModeDialog`, `HardwareAccessDialog` | `ui/component/` | Opt-in flows that need a typed confirmation phrase |
+| `HardwareAccessDialog(onConfirm, onDismiss)` | `ui/component/HardwareAccessDialog.kt` | Opt-in flow that needs a typed confirmation phrase |
+| `DsBottomSheet(onDismiss, title, footer, titleAction) { }` | `ui/component/DsBottomSheet.kt` | A short "add" form over the page it adds to. Same footer rule as `DsDialog` |
+| `DiscardEditsDialog(onDiscard, onKeepEditing)` | `ui/component/ContainerConfigHost.kt` | Leaving a page with unapplied edits. `rememberDraftBack` shows it for you |
 | `DangerousWarningCard(title, text)` + `ConfirmPhraseField(value, onValueChange, isError)` | `ui/component/DangerousActionConfirm.kt` | Building a destructive confirmation. Compose these two with `DialogFooterRow` |
 | `TerminalDialog(title, logs, onDismiss, onClear, isBlocking)` | `ui/component/TerminalDialog.kt` | Showing live or streaming command output |
 | `ProgressDialog(message)` / `ErrorLogsDialog(logs)` | `ui/util/DialogUtils.kt` | Blocking spinner, or a failed command's log lines |
@@ -294,10 +298,16 @@ the language and about dialogs in `ui/screen/SettingsScreen.kt`). Do not import 
 
 | Symbol | Path | Use it when |
 | --- | --- | --- |
-| `SettingsCard(title, onClick, icon, subtitleContent, trailing, below, ...)` | `ui/component/SettingsCard.kt` | The base for every settings or option row. Build new variants on top of it |
-| `SettingsRowCard`, `ToggleCard` | `ui/component/` | Clickable row, or switch row. Both are thin wrappers over `SettingsCard`. `ToggleCard(expandedContent = ...)` opens a body inside the card while the switch is on |
+| `SettingsGroup { }` + `GroupHeader`, `GroupIntro`, `GroupDivider` | `ui/component/SettingsGroup.kt` | Any settings-style screen: one surface per section, rows flat inside, a header above |
+| `NavRow(title, onClick, icon, value, summary, danger, error)` | `ui/component/SettingsGroup.kt` | A row in a group that opens a page, showing the current value |
+| `RadioRow(title, description, selected, onClick)` | `ui/component/NetworkModePage.kt` | One option of a radio list in a group |
+| `EntryRow(text, onDelete, ...)` / `AddEntryButton(label, onClick)` | `ui/component/ListEntryCards.kt` | Editable lists: the entries inside a group, the add button under it |
+| `GroupField { }` / `InlineWarning(text)` | `ui/component/ContainerConfigForm.kt` | A text field inside a group, padded like the rows; an error-tinted note inside one |
+| `screenGutter()`, `isCompactWidth()`, `isShortHeight()` | `ui/component/SettingsGroup.kt` | Margins and layout switches for narrow and short windows. See DESIGN.md "Small screens" |
+| `SettingsCard(title, onClick, icon, subtitleContent, trailing, below, ...)` | `ui/component/SettingsCard.kt` | A standalone card row outside a group |
+| `ToggleCard` | `ui/component/ToggleCard.kt` | A standalone switch card. Inside a group use `SwitchItem` |
 | `DsSlider(value, onValueChange, valueRange, ...)` | `ui/component/DsSlider.kt` | Any slider. Never restyle a raw `Slider` at the call site |
-| `SwitchItem` | `ui/component/SwitchItem.kt` | Flat `ListItem` switch row, used on the Settings screen. See the duplicates note below |
+| `SwitchItem` | `ui/component/SwitchItem.kt` | The switch row inside a `SettingsGroup`. See the duplicates note below |
 | `ContainerCard(container, actions, ...)` + `ContainerCardActions` | `ui/component/ContainerCard.kt` | The expandable container row. Add new actions to `ContainerCardActions`, not as new parameters |
 | `RunningContainerCard(container, onEnter, onTerminalClick, osInfo)` | `ui/component/RunningContainerCard.kt` | Compact running container card on the control panel |
 | `DroidspacesStatusCard(status, version, ...)` + `DroidspacesStatus` | `ui/component/DroidspacesStatusCard.kt` | Backend or module status hero card |
@@ -325,7 +335,8 @@ the language and about dialogs in `ui/screen/SettingsScreen.kt`). Do not import 
 | `DroidspacesTheme(darkTheme, dynamicColor, amoledMode, themePalette)` | `ui/theme/Theme.kt` | The single theme root, applied in `MainActivity` |
 | `rememberThemeState()` + `ThemeState` | `ui/theme/ThemeStateHolder.kt` | Reading live theme preferences |
 | `ThemePalette` | `ui/theme/Color.kt` | Adding an accent palette. Here and nowhere else |
-| `MaterialTheme.colorScheme.*` | | All colors. `ui/theme/Color.kt` holds only `AMOLED_BLACK` and the palettes now |
+| `MaterialTheme.colorScheme.*` | | All colors. `ui/theme/Color.kt` holds `AMOLED_BLACK`, the palettes, the warning pair and `ColorScheme.isDark` |
+| `ColorScheme.isDark`, `warningContainer`, `onWarningContainer` | `ui/theme/Color.kt` | Dark-mode branches and the amber warning pair. Never re-derive from `luminance()` |
 | `MaterialTheme.typography.*`, `JetBrainsMono` | `ui/theme/Type.kt` | All text styles, and the mono font for terminal, log, and code text |
 | Corner radii, spacing, type roles | [DESIGN.md](./DESIGN.md) | Every visual value. There is no shape token object, the numbers live in DESIGN.md |
 | `AnimationUtils` | `util/AnimationUtils.kt` | Durations, easing, and tween specs. Never a literal `tween(300)` |
@@ -369,6 +380,7 @@ it should be set.
 | `ValidationUtils.validateConfigValues(config)` | same | Before writing a config. Rejects control characters in single-line values |
 | `ValidationUtils.validateGatewayConfig(...)` + `GatewayErrors` | same | Gateway collision rules across containers |
 | `ValidationUtils.effGatewayNet/Iface/Bridge` | same | Deriving gateway defaults. These mirror the C runtime, do not re-derive them |
+| `ValidationUtils.ifaceNameInput(input, wildcards)` | same | Filtering a typed interface name as the user types. Mirrors `ds_parse_iface_csv()` and IFNAMSIZ |
 | `ValidationResult` | same | The shared success and error result type |
 | `ContainerManager.sanitizeContainerName(name)` | `util/ContainerManager.kt` | Path shaping only. This is **not** a security validator, pair it with `isSafeContainerName` |
 

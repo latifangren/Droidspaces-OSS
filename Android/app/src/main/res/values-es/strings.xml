@@ -119,7 +119,6 @@
     <string name="container_name_exists">Ya existe un contenedor con este nombre</string>
     <string name="next_configuration">Siguiente: Configuración</string>
     <string name="configuration_title">Configuración</string>
-    <string name="container_options">Opciones del contenedor</string>
     <string name="next_storage">Siguiente: Almacenamiento</string>
     <string name="installation_complete">Instalación completada</string>
     <string name="installation_failed">Instalación fallida</string>

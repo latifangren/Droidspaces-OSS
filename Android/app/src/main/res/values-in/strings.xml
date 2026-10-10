@@ -134,19 +134,10 @@
     <string name="network_mode_host">Host</string>
     <string name="network_mode_nat">NAT (Default)</string>
     <string name="network_mode_none">Tidak ada (terisolasi secara fisik)</string>
-    <string name="nat_settings">Pengaturan NAT</string>
     <string name="upstream_interface_title">Antarmuka Upstream (Opsional)</string>
     <string name="upstream_interface_hint">Sematkan akses internet ke antarmuka tertentu. Kosongkan untuk mendeteksi uplink aktif secara otomatis.</string>
     <string name="add_upstream_interface">Tambahkan Antarmuka Upstream</string>
-    <string name="available_system_interfaces">Antarmuka Sistem yang Tersedia:</string>
-    <string name="enter_manually">Atau masukkan secara manual (karakter pengganti juga didukung):</string>
-    <string name="interface_name_hint">Nama Antarmuka (misalnya wlan0, v4-rmnet_data*)</string>
     <string name="add_port_forward">Tambahkan Port Forward</string>
-    <string name="host_port_hint">Port Host (1–65535 atau rentang 100–200)</string>
-    <string name="container_port_hint">Port Kontainer (1–65535 atau rentang)</string>
-    <string name="protocol">Protokol</string>
-    <string name="optional_symmetric_hint">Opsional (misalnya 8080 atau 1000–2000)</string>
-    <string name="leave_blank_for_symmetric">Biarkan kosong untuk pemetaan simetris</string>
     <string name="error_invalid_range_format">Format rentang tidak valid (AWAL-AKHIR)</string>
     <string name="error_ports_must_be_numbers">Nama Port harus berupa angka</string>
     <string name="error_port_out_of_range">Nomor port harus berkisar antara 1 hingga 65535</string>
@@ -154,7 +145,6 @@
     <string name="error_port_must_be_number">Port harus berupa angka</string>
     <string name="error_port_width_mismatch">Ketidaksesuaian rentang host/kontainer</string>
     <string name="error_port_overlap">Tumpang tindih dengan aturan port forward yang sudah ada</string>
-    <string name="symmetric_label">(Simetris)</string>
     <string name="port_forward_examples">Contoh: 8080 (tunggal), 8000-8010 (rentang). Biarkan kolom tujuan kosong untuk pemetaan simetris.</string>
     <string name="saved">Tersimpan</string>
     <string name="saving">Menyimpan...</string>
@@ -169,10 +159,7 @@
     <string name="port_forwarding">Penerusan Port</string>
     <string name="add">Tambah</string>
     <string name="add_bind_mount">Tambah Bind Mount</string>
-    <string name="enter_container_path">Pilih Jalur Kontainer</string>
     <string name="container_path_placeholder">misalnya. /mnt/sdcard</string>
-    <string name="host_path">Jalur host: %1$s</string>
-    <string name="container_path">Jalur kontainer: %1$s</string>
     <string name="dns_servers_label">Server DNS</string>
     <string name="dns_servers_placeholder">Misalnya. 1.1.1.1,8.8.8.8 (Opsional)</string>
     <string name="dns_servers_hint">Hanya angka, titik, dan tanda titik dua</string>
@@ -187,7 +174,6 @@
     <string name="container_name_exists">Kontainer dengan nama ini sudah ada</string>
     <string name="next_configuration">Selanjutnya: Konfigurasi</string>
     <string name="configuration_title">Konfigurasi</string>
-    <string name="container_options">Opsi Kontainer</string>
     <string name="next_storage">Selanjutnya: Penyimpanan</string>
     <string name="installation_complete">Pemasangan Selesai</string>
     <string name="installation_failed">Pemasangan Gagal</string>
@@ -423,8 +409,7 @@
     <string name="network_mode_host_short">Host</string>
     <string name="network_mode_gateway">Gateway (Router Virtual)</string>
     <string name="network_mode_gateway_short">Gateway</string>
-    <string name="gateway_settings">Pengaturan Gateway</string>
-    <string name="gateway_settings_description">Rutekan container ini melalui container lain yang bertindak sebagai router (mis. OpenWRT). Gateway tersebut harus berjalan lebih dulu.</string>
+    <string name="gateway_settings_description">Rutekan container ini melalui container lain yang bertindak sebagai router (mis. OpenWRT).</string>
     <string name="gateway_container">Container Gateway</string>
     <string name="gateway_net">Nama LAN</string>
     <string name="gateway_net_hint">lan</string>
@@ -432,8 +417,6 @@
     <string name="gateway_iface_hint">eth1</string>
     <string name="gateway_bridge">Bridge Host</string>
     <string name="gateway_bridge_hint">ds-lan</string>
-    <string name="gateway_configure">Konfigurasikan Gateway</string>
-    <string name="gateway_configure_title">Konfigurasikan Gateway</string>
     <string name="gateway_configure_intro">Pengaturan ini mengontrol bagaimana container ini terhubung ke LAN virtual gateway. Nilai bawaan cocok untuk satu LAN di belakang satu gateway - ubah hanya saat menjalankan beberapa segmen LAN atau lebih dari satu gateway.</string>
     <string name="gateway_iface_explain">Nama antarmuka tempat koneksi ini muncul DI DALAM container gateway (mis. eth1 di OpenWRT). Harus cocok dengan antarmuka tempat gateway Anda melayani DHCP. Setiap segmen terpisah pada gateway yang sama memerlukan nama uniknya sendiri. Bawaan: eth1.</string>
     <string name="gateway_net_explain">Label untuk segmen LAN ini. Container yang memakai gateway dan nama LAN yang sama akan bergabung ke virtual switch yang sama dan dapat saling melihat. Gunakan nama berbeda untuk membuat segmen kedua yang terisolasi. Bawaan: lan.</string>
@@ -556,7 +539,6 @@
         <item quantity="other">%1$s inti</item>
     </plurals>
     <string name="env_placeholder">KEY=VALUE, satu per baris. Baris yang diawali dengan # akan diabaikan.</string>
-    <string name="env_lines_skipped">%1$d baris tidak dalam format KEY=VALUE</string>
     <string name="fetching_logs">Mengambil log...</string>
     <string name="journal_load_error_title">Tidak dapat memuat log</string>
     <string name="journal_load_error_message">Unit mungkin tidak memiliki jurnal, atau kontainer tidak dapat dijangkau.</string>

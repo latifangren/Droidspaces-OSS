@@ -80,13 +80,16 @@ fun DsDialog(
         // the shell bounds itself with it: screen height minus the 24.dp gutter
         // on each side. Caller caps land after it and shrink it further.
         val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+        // A 240px flip phone has no room for 96dp of side margins.
+        val gutter = if (isCompactWidth()) 8.dp else 24.dp
+        val inner = if (isCompactWidth()) 16.dp else 24.dp
         val clearFocus = rememberClearFocus()
         Surface(
             modifier = Modifier
                 .windowInsetsPadding(WindowInsets.ime)
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 24.dp)
-                .heightIn(max = screenHeight - 48.dp)
+                .padding(horizontal = gutter, vertical = gutter)
+                .heightIn(max = screenHeight - gutter * 2)
                 .then(modifier)
                 // A dialog is its own window, so the ClearFocusOnClickOutside that wraps the
                 // screen never sees these taps and a focused field stayed outlined. A gesture
@@ -99,7 +102,7 @@ fun DsDialog(
             tonalElevation = 0.dp
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
+                modifier = Modifier.padding(inner),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Column(

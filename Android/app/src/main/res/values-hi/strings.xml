@@ -131,7 +131,6 @@
     <string name="next_configuration">अगला: कॉन्फ़िगरेशन</string>
     <!-- Container Config Screen -->
     <string name="configuration_title">कॉन्फ़िगरेशन</string>
-    <string name="container_options">कंटेनर विकल्प</string>
     <string name="next_storage">अगला: स्टोरेज</string>
     <!-- Installation Screen -->
     <string name="installation_complete">इंस्टॉलेशन पूर्ण</string>

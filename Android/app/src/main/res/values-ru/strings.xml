@@ -131,7 +131,6 @@
     <string name="next_configuration">Далее: Конфигурация</string>
     <!-- Container Config Screen -->
     <string name="configuration_title">Конфигурация</string>
-    <string name="container_options">Опции контейнера</string>
     <string name="next_storage">Далее: Хранилище</string>
     <!-- Installation Screen -->
     <string name="installation_complete">Установка завершена</string>

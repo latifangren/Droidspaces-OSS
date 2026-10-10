@@ -119,7 +119,6 @@
     <string name="container_name_exists">Mayroon nang container na may ganitong pangalan</string>
     <string name="next_configuration">Sunod: Configuration</string>
     <string name="configuration_title">Configuration</string>
-    <string name="container_options">Mga Opsyon ng Container</string>
     <string name="next_storage">Sunod: Storage</string>
     <string name="installation_complete">Tapos na ang Pag-install</string>
     <string name="installation_failed">Nabigo ang Pag-install</string>

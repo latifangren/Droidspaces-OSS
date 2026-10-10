@@ -98,6 +98,8 @@ fun PrimaryActionBottomBar(
     shape: Shape = RoundedCornerShape(20.dp),
     content: @Composable RowScope.() -> Unit,
 ) {
+    // A short window keeps the button but not the generous padding around it.
+    val short = isShortHeight()
     val bg by animateColorAsState(
         targetValue = containerColor,
         animationSpec = tween(durationMillis = 250),
@@ -116,7 +118,7 @@ fun PrimaryActionBottomBar(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontalPadding)
+                    .padding(horizontal = if (short) 8.dp else horizontalPadding, vertical = if (short) 8.dp else horizontalPadding)
                     .navigationBarsPadding(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -130,7 +132,7 @@ fun PrimaryActionBottomBar(
                     tonalElevation = 0.dp
                 ) {
                     Box(
-                        modifier = Modifier.padding(vertical = 16.dp).fillMaxWidth(),
+                        modifier = Modifier.padding(vertical = if (short) 12.dp else 16.dp).fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
                         Row(

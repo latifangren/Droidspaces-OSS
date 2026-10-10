@@ -128,6 +128,7 @@ wants 12 or 16.
 | --- | --- |
 | Screen edge, lists and dashboards | 16 horizontal |
 | Screen edge, wizard and setup flows | 24 horizontal |
+| Screen edge, any screen below 320dp wide | 8 horizontal, via `screenGutter()` |
 | Between cards in a list | 16 |
 | Between blocks inside a card | 12 |
 | Card inner padding | 16 |
@@ -216,6 +217,70 @@ menu" custom accessibility action because TalkBack reaches the toggle before the
 
 One site uses it: `ui/screen/ContainersScreen.kt`. A second screen copies that block.
 
+## Settings screens and forms
+
+A screen of options is the settings screen's layout, the container config screen included:
+
+```
+GroupHeader("Networking")          titleSmall Bold primary, inset to the text inside the group
+GroupIntro("...")                  optional, bodyMedium onSurfaceVariant @ 0.7f
+SettingsGroup {                    one surface per section, radius 24, border outlineVariant @ 0.35f
+  SwitchItem / NavRow / RadioRow / EntryRow / GroupField
+  GroupDivider()                   between rows, inset 16
+}
+AddEntryButton("Add ...")          under a list, outside the group, 12dp below it
+```
+
+Inside a page the section titles are `GroupHeader(sub = true)`, `bodyLarge` Bold in
+`onSurface`, the size the form's sub-titles always had. Rows follow `SwitchItem`: 56dp for one
+line, 72dp for two, 12dp vertical padding, text starting on the same line whether the row leads
+with an icon or a radio. A list entry is 72dp whatever it holds.
+
+Rows sit flat inside the group. A row never draws its own card, and a section never becomes a
+stack of cards. Headings are `GroupHeader`; a sub-section is another header and group, never
+a bold title in between. A warning about a setting is a `DangerousWarningCard` above its
+group, the same red card as the privileged page, not a tinted note in another colour.
+
+| Setting needs | Row |
+| --- | --- |
+| On or off | `SwitchItem` |
+| One of a few options, each worth a line of explanation | `RadioRow` in a `selectableGroup()` group |
+| One of many options | `DsDropdown` inside a `GroupField` |
+| Free text | `OutlinedTextField` inside a `GroupField` |
+| A list, a set of related fields, or more than fits in a row | `NavRow` to a page, showing the current value |
+
+**Pages, sheets and dialogs.** A page is a full screen (`ConfigPageScaffold`) for an option with
+its own structure: a list, several fields, a draft. A sheet (`DsBottomSheet`) is for adding one
+item to a list, so the list stays in view behind it. A dialog is for a decision that blocks:
+a confirmation, a typed phrase.
+
+Every page is a `DraftPageScaffold` and edits a draft. Leaving keeps the draft, the way the
+form always applied edits, unless the page's own rules fail: then back, from the arrow or the
+system, asks "Discard edits?" so no page leaves broken settings behind. Privileged mode is the
+one page with a button, because turning a flag on needs the typed phrase first: its "Done"
+`PrimaryActionBottomBar` is grey until something changed and the phrase matches, and back
+there never keeps the draft.
+
+## Bottom sheets
+
+`DsBottomSheet` lays out like `DsDialog`: title, a body that scrolls, and a `footer` measured
+first, so the actions stay above the keyboard. It stops below the status bar, pads for the
+navigation bar and the keyboard itself, and skips the half-open state. The footer is a
+`DialogFooterRow`.
+
+## Small screens
+
+Droidspaces runs on 240x320 flip phones and on phones in landscape with the keyboard up, so
+every screen is checked at both.
+
+- Below 320dp wide (`isCompactWidth()`): side margins halve (`screenGutter()`), two fields
+  side by side stack, footer buttons stack.
+- Below 480dp tall (`isShortHeight()`): the top bar drops to 48dp and the action bar's padding
+  shrinks.
+- No fixed widths. Every text in a row takes `weight(1f)` and a `maxLines`.
+- Test with `adb shell wm size 240x320` and `wm density 120`, then 160. Read the current
+  `wm density` first and put it back after.
+
 ## Dialogs
 
 Every dialog is `DsDialog`, and it owns the layout, not just the frame:
@@ -239,9 +304,11 @@ a sliver or nothing in landscape. The footer is unweighted and declared second, 
 measured first and always gets its full height.
 
 Callers therefore do not set a width, their own padding, or their own scroll, and never pass
-`wrapContentHeight()`, the shell already wraps. What is genuinely per-dialog rides on the
-`modifier`: `imePadding()` for a text field, and for a dialog that should stay modest, a cap on
-the whole dialog, `heightIn(max = ...)` or a `fillMaxHeight` fraction, never on an inner list.
+`wrapContentHeight()`, the shell already wraps. The shell handles the keyboard itself, so no
+`imePadding()` either. It pads for the keyboard only, never the system bars: their insets drop
+to zero while the window closes, and padding for them makes the dialog jump on dismiss. What is genuinely per-dialog rides on the `modifier`: for a dialog that
+should stay modest, a cap on the whole dialog, `heightIn(max = ...)` or a `fillMaxHeight`
+fraction, never on an inner list.
 A shell-level cap is safe because a squeezed body scrolls instead of eating the footer.
 Destructive dialogs pass `borderColor` to outline in `error`. A body built on a `LazyColumn`
 passes `scrollableContent = false` and weights the list, `fill = false` if the dialog should
@@ -265,7 +332,8 @@ and a filled confirm:
 | Confirm, disabled | fill `onSurface @ 0.12f`, label `onSurface @ 0.38f` |
 
 Equal weight and a fixed height are the point: the two buttons are always the same size, and
-neither one changes because of the other's label.
+neither one changes because of the other's label. Below 320dp wide the row stacks, confirm on
+top, because two buttons side by side would leave each about 60dp.
 
 **Labels are one line and ellipsize.** If a label wraps, the label is too long. Shorten the
 string, do not grow the button. "Allow" and "Not now" beat "Grant Permission" and "I Understand"

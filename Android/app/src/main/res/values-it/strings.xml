@@ -150,20 +150,11 @@
     <string name="network_mode_host">Host</string>
     <string name="network_mode_nat">NAT (Predefinita)</string>
     <string name="network_mode_none">Nessuna (Air-gapped)</string>
-    <string name="nat_settings">Impostazioni NAT</string>
     <string name="upstream_interface_title">Interfaccia Upstream (Opzionale)</string>
     <string name="upstream_interface_hint">Vincola la connessione a internet a interfacce specifiche. Lascia vuoto per rilevare automaticamente la connessione attiva.</string>
     <string name="add_upstream_interface">Aggiungi interfaccia upstream</string>
-    <string name="available_system_interfaces">Interfacce di sistema disponibili:</string>
-    <string name="enter_manually">O inseriscila manualmente (i wildcard sono supportati):</string>
-    <string name="interface_name_hint">Nome interfaccia (es. wlan0, v4-rmnet_data*)</string>
     <string name="port_forwarding">Inoltro Porte</string>
     <string name="add_port_forward">Aggiungi Port Forward</string>
-    <string name="host_port_hint">Porta Host (1-65535 o intervallo 100-200)</string>
-    <string name="container_port_hint">Porta Contenitore (1-65535 o intervallo)</string>
-    <string name="protocol">Protocollo</string>
-    <string name="optional_symmetric_hint">Opzionale (es. 8080 o 1000-2000)</string>
-    <string name="leave_blank_for_symmetric">Lascia vuoto per mappatura simmetrica</string>
     <string name="error_invalid_range_format">Formato intervallo non valido (INIZIO-FINE)</string>
     <string name="error_ports_must_be_numbers">Le porte devono essere numeri</string>
     <string name="error_port_out_of_range">Le porte devono essere tra 1-65535</string>
@@ -171,7 +162,6 @@
     <string name="error_port_must_be_number">La porta deve essere un numero</string>
     <string name="error_port_width_mismatch">Larghezza intervallo Host/Contenitore non corrispondente</string>
     <string name="error_port_overlap">Sovrapposto a una regola di port forward esistente</string>
-    <string name="symmetric_label">(Simmetrico)</string>
     <string name="port_forward_examples">Esempi: 8080 (singolo), 8000-8010 (intervallo). Lascia il target vuoto per la mappatura simmetrica.</string>
     <string name="saved">Salvato</string>
     <string name="saving">Salvataggio in corso...</string>
@@ -187,10 +177,7 @@
     <string name="bind_mounts">Bind Mount</string>
     <string name="add">Aggiungi</string>
     <string name="add_bind_mount">Aggiungi Bind Mount</string>
-    <string name="enter_container_path">Inserisci percorso contenitore</string>
     <string name="container_path_placeholder">es. /mnt/sdcard</string>
-    <string name="host_path">Percorso host: %1$s</string>
-    <string name="container_path">Percorso contenitore: %1$s</string>
     <string name="dns_servers_label">Server DNS</string>
     <string name="dns_servers_placeholder">es. 1.1.1.1,8.8.8.8 (Opzionale)</string>
     <string name="dns_servers_hint">Solo numeri, punti e due punti</string>
@@ -208,7 +195,6 @@
     <string name="next_configuration">Avanti: Configurazione</string>
     <!-- Container Config Screen -->
     <string name="configuration_title">Configurazione</string>
-    <string name="container_options">Opzioni Contenitore</string>
     <string name="next_storage">Avanti: Storage</string>
     <!-- Installation Screen -->
     <string name="installation_complete">Installazione completata</string>

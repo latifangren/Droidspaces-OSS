@@ -1706,6 +1706,9 @@ int validate_bind_destination(const char *dest) {
   if (strlen(dest) >= PATH_MAX)
     return 0;
 
+  /* "//" and "///" have no segment at all and land on the rootfs itself,
+   * the same as "/", so a destination needs one real component. */
+  int segments = 0;
   const char *p = dest;
   while (*p) {
     while (*p == '/')
@@ -1716,6 +1719,7 @@ int validate_bind_destination(const char *dest) {
     size_t len = (size_t)(p - start);
     if (len == 0)
       continue;
+    segments++;
     if ((len == 1 && start[0] == '.') ||
         (len == 2 && start[0] == '.' && start[1] == '.'))
       return 0;
@@ -1725,7 +1729,7 @@ int validate_bind_destination(const char *dest) {
     }
   }
 
-  return 1;
+  return segments > 0;
 }
 
 /* Parse human-readable size: "512M", "1G", "2048" (bytes). Returns -1 on error.

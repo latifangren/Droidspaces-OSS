@@ -119,7 +119,6 @@
     <string name="container_name_exists">Tiene ya container con este nombre</string>
     <string name="next_configuration">Siguiente: Configuracion</string>
     <string name="configuration_title">Configuracion</string>
-    <string name="container_options">Maga Opcion del Container</string>
     <string name="next_storage">Siguiente: Storage</string>
     <string name="installation_complete">Completo el Instalacion</string>
     <string name="installation_failed">Fallo el Instalacion</string>

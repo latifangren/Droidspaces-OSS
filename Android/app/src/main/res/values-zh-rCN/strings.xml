@@ -127,20 +127,11 @@
     <string name="network_mode_host">主机</string>
     <string name="network_mode_nat">NAT（默认）</string>
     <string name="network_mode_none">无（完全隔离）</string>
-    <string name="nat_settings">NAT 设置</string>
     <string name="upstream_interface_title">上游网络接口（可选）</string>
     <string name="upstream_interface_hint">将网络访问固定到指定接口。留空则自动检测当前活动的上游接口。</string>
     <string name="add_upstream_interface">添加上游网络接口</string>
-    <string name="available_system_interfaces">可用的系统接口：</string>
-    <string name="enter_manually">或手动输入（支持通配符）：</string>
-    <string name="interface_name_hint">接口名称（如：wlan0, v4-rmnet_data*）</string>
     <string name="port_forwarding">端口转发</string>
     <string name="add_port_forward">添加端口转发</string>
-    <string name="host_port_hint">主机端口（1-65535 或范围 100-200）</string>
-    <string name="container_port_hint">容器端口（1-65535 或范围）</string>
-    <string name="protocol">协议</string>
-    <string name="optional_symmetric_hint">可选（如：8080 或 1000-2000）</string>
-    <string name="leave_blank_for_symmetric">留空表示对称映射</string>
     <string name="error_invalid_range_format">范围格式无效（起始-结束）</string>
     <string name="error_ports_must_be_numbers">端口必须是数字</string>
     <string name="error_port_out_of_range">端口必须为 1-65535</string>
@@ -148,7 +139,6 @@
     <string name="error_port_must_be_number">端口必须是数字</string>
     <string name="error_port_width_mismatch">主机/容器端口范围宽度不匹配</string>
     <string name="error_port_overlap">与现有的端口转发规则重叠</string>
-    <string name="symmetric_label">（对称）</string>
     <string name="port_forward_examples">例如：8080（单个端口），8000-8010（范围）。留空表示对称映射。</string>
     <string name="saved">已保存</string>
     <string name="saving">正在保存...</string>
@@ -244,7 +234,6 @@
     <string name="no_masked_services">没有已屏蔽的服务</string>
     <string name="configuration_title">配置</string>
     <string name="no_output_available">没有可用的输出</string>
-    <string name="container_path">容器路径：%1$s</string>
     <string name="installation_failed">安装失败</string>
     <string name="environment_variables">环境变量</string>
     <string name="no_static_services">没有静态服务</string>
@@ -252,9 +241,7 @@
     <string name="root_access_not_available">无法获取 Root 权限</string>
     <string name="container_name_exists">已存在同名容器</string>
     <string name="disable_service">禁用</string>
-    <string name="enter_container_path">输入容器路径</string>
     <string name="root_access_not_available_description">由于无法获取 Root 权限，此页面已被禁用</string>
-    <string name="container_options">容器选项</string>
     <string name="dns_servers_placeholder">例如：1.1.1.1,8.8.8.8（可选）</string>
     <string name="backend_not_available_description">Droidspaces 后端未安装或已损坏。请先安装。</string>
     <string name="enable_service">启用</string>
@@ -266,7 +253,6 @@
     <string name="cat_security">安全与启动</string>
     <string name="selinux_status">SELinux 状态</string>
     <string name="all_legend">全部</string>
-    <string name="host_path">宿主机路径：%1$s</string>
     <string name="termux_x11">配置 Termux:X11</string>
     <string name="architecture">架构</string>
     <string name="no_containers_running">没有运行中的容器</string>
@@ -443,8 +429,7 @@
     <string name="reorder_handle">拖动以重新排序</string>
     <string name="network_mode_gateway">网关（虚拟路由器）</string>
     <string name="network_mode_gateway_short">网关</string>
-    <string name="gateway_settings">网关设置</string>
-    <string name="gateway_settings_description">把这个容器通过另一个充当路由器的容器（例如 OpenWRT）路由。该网关必须先运行起来。</string>
+    <string name="gateway_settings_description">把这个容器通过另一个充当路由器的容器（例如 OpenWRT）路由。</string>
     <string name="gateway_container">网关容器</string>
     <string name="gateway_net">局域网名称</string>
     <string name="gateway_net_hint">局域网</string>
@@ -452,8 +437,6 @@
     <string name="gateway_iface_hint">eth1</string>
     <string name="gateway_bridge">主机桥</string>
     <string name="gateway_bridge_hint">ds-lan</string>
-    <string name="gateway_configure">配置网关</string>
-    <string name="gateway_configure_title">配置网关</string>
     <string name="gateway_configure_intro">这些控制这个容器如何接入网关的虚拟局域网。默认设置适用于单个网关后的单个局域网——只有在运行多个局域网段或多个网关时才需要更改它们。</string>
     <string name="gateway_iface_explain">这个连接显示的接口名称在网关容器内部出现（例如 OpenWRT 中的 eth1）。它必须与网关设置为提供 DHCP 的接口匹配。同一网关上的每个独立网络段都需要一个唯一的名称。默认值：eth1。</string>
     <string name="gateway_net_explain">这个 LAN 段的标签。共享相同网关和 LAN 名称的容器会加入同一个虚拟交换机，并且可以彼此互相访问。使用不同的名称可以创建一个隔离的第二个段。默认值：lan。</string>

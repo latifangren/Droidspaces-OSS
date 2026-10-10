@@ -131,7 +131,6 @@
     <string name="next_configuration">Suivant : Configuration</string>
     <!-- Container Config Screen -->
     <string name="configuration_title">Configuration</string>
-    <string name="container_options">Options du conteneur</string>
     <string name="next_storage">Suivant : Stockage</string>
     <!-- Installation Screen -->
     <string name="installation_complete">Installation terminée</string>

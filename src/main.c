@@ -563,8 +563,9 @@ int ds_apply_cli_overrides(int argc, char **argv, struct ds_config *cfg,
           return -1;
         }
         if (!validate_bind_destination(dest)) {
-          ds_error("Unsafe bind destination '%s': path traversal or control "
-                   "characters not allowed.",
+          ds_error("Unsafe bind destination '%s': it must name a path inside "
+                   "the container, not / itself, with no '.', '..' or control "
+                   "characters.",
                    dest);
           free(dup);
           return -1;
