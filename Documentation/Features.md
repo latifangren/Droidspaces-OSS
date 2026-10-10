@@ -39,6 +39,8 @@ Droidspaces has four networking modes, and the mode decides whether a network na
 
 4. **Gateway mode (`--net=gateway`)**: The container's LAN is handed to *another* running container (typically OpenWRT). Droidspaces does only the L2 plumbing (bridge and veth pairs), and the gateway container owns all policy: DHCP, DNS, firewall, routing, VPN. Use it for VPN killswitches, segmented LANs and traffic analysis. The [Networking From Zero](Networking-From-Zero.md) guide covers it in full.
 
+5. **Macvlan mode (`--net=macvlan`)**: The container sits directly on a wired LAN through a host NIC (usually a USB Ethernet adapter), with its own MAC address and an address from that LAN's DHCP server. No NAT and nothing on the host to maintain. See [Macvlan mode](#5-macvlan-mode---netmacvlan) below.
+
 ### How it compares to chroot
 
 A `chroot` only changes the apparent root directory of a process. It gives no process, mount, hostname or IPC isolation. A process inside a chroot shares the host's PID space, can see and signal other processes, and cannot run an init system like systemd.
@@ -294,6 +296,39 @@ The container sits on an isolated L2 bridge whose **policy is owned by another r
 - **Interface naming**: `--gateway-iface=IFACE` (default `eth1`) sets what the LAN interface is called *inside* the gateway container, so it matches the gateway's own config.
 - **Self-healing**: Wiring is driven entirely from the host side, so clients are (re)wired automatically when the gateway container starts or reboots. No client restart is needed.
 - **Use cases**: VPN killswitch for selected containers, VLAN-style segmented LANs, single-chokepoint traffic analysis, gateway-wide DNS filtering. See [Networking From Zero](Networking-From-Zero.md) for the complete walkthrough.
+
+### 5. Macvlan mode (`--net=macvlan`)
+
+The container's `eth0` is a macvlan on a host NIC: it gets its own MAC address on that NIC's LAN, and its address, route and DNS come from that LAN's DHCP server, usually your router. Other devices on the LAN reach the container directly, without port forwarding. Droidspaces installs no NAT, firewall or routing rules for it, and Android's network policy never sees its traffic.
+
+```bash
+droidspaces --name=ubuntu --rootfs=/data/ubuntu --net=macvlan --macvlan-parent=eth0 start
+```
+
+- **Required flag**: `--macvlan-parent=IF` names the host NIC, for example `eth0`.
+- **Mode**: `--macvlan-mode` is `bridge` by default, so containers on the same NIC reach each other directly. `private`, `vepa` and `passthru` are the other Linux macvlan modes.
+- **Stable identity**: the MAC is derived from the container name, so the router hands out the same lease after every restart.
+- **Replugging**: unplugging the NIC deletes the container's `eth0`. Droidspaces recreates it within about two seconds of the NIC coming back, and the container's DHCP client takes the same lease again.
+- **Requirements**: `CONFIG_MACVLAN` in the kernel (see the [Kernel configuration guide](Kernel-Configuration.md)); `droidspaces check` reports it as **Macvlan support**.
+
+What it cannot do:
+
+- **Wired NICs only.** A Wi-Fi access point only delivers frames to the MAC that associated with it, so a macvlan on `wlan0` gets no traffic on almost every network. `passthru` mode is the exception that does not last: it takes over `wlan0`'s own MAC, so it works at first, but it also takes the WPA key exchange frames away from Android, and the access point drops the phone at the next rekey or roam (`reason=15`, 4-way handshake timeout). Mobile data (`rmnet*`) carries no Ethernet frames at all, and the kernel refuses a macvlan on it.
+- **The phone cannot reach the container through that NIC.** A macvlan never talks to its own parent. Use the container's LAN address from another device, or `droidspaces run` / `enter` from the phone.
+- **NetworkManager inside the container cannot manage the interface**, because its parent lives in the host's namespace. Rootfs that Droidspaces installed and that rely on NetworkManager run dhcpcd for `eth0` in macvlan mode instead: Artix always, and a systemd rootfs without systemd-networkd when dhcpcd is installed. Without dhcpcd, give the container a static address. systemd-networkd, dhcpcd and OpenWrt's netifd work as they are.
+- **One passthru container per interface.** Passthru takes the whole NIC, so it cannot share it with any other macvlan container.
+
+A start that could never get a network is refused with the reason: no `--macvlan-parent`, a kernel without `CONFIG_MACVLAN`, a parent that is not an Ethernet interface, or a parent another running container holds in passthru mode. A parent that is only unplugged is fine; `eth0` appears when it is plugged in.
+
+> [!NOTE]
+>
+> A rootfs installed before macvlan mode existed only starts its DHCP client in NAT and gateway mode, so its `eth0` gets no IPv4 address. Run this once inside the container to allow macvlan too:
+>
+> ```bash
+> sed -i 's/net_mode=(nat|gateway)/net_mode=(nat|gateway|macvlan)/' $(grep -rl 'net_mode=(nat|gateway)' /etc)
+> ```
+>
+> NetworkManager-based rootfs (Artix) also need the dhcpcd fallback, which only a fresh install brings.
 
 ### Port forwarding (NAT mode)
 

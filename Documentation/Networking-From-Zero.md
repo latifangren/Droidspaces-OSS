@@ -772,17 +772,17 @@ Two more things to know:
 
 ## Part 11: Comparing all networking modes
 
-| Feature | NAT Mode | Host Mode | None Mode | Gateway Mode |
-|---|---|---|---|---|
-| Who assigns IPs? | Droidspaces DHCP | Android (shared) | Nobody (loopback only) | OpenWRT dnsmasq |
-| Who does NAT? | Droidspaces iptables | Android | N/A | OpenWRT (via Droidspaces NAT on OpenWRT's WAN) |
-| Who manages firewall? | Droidspaces | Android | N/A | OpenWRT |
-| Who manages DNS? | Droidspaces | Android | Nobody | OpenWRT dnsmasq |
-| Container isolated from host network? | Yes | No | Yes | Yes |
-| Internet access? | Yes | Yes | No | Yes (via gateway container) |
-| IPv6? | Yes, with NAT66 (needs kernel support) | Whatever Android has | Loopback only | Yes, once OpenWRT is set up for it (see Part 10) |
-| Needs a second container to function? | No | No | No | Yes (the gateway container) |
-| Good for | Simple internet access | Maximum performance, no veth or bridge in the path | Offline / sandboxed workloads | Router appliance, VPN gateway, segmented LANs |
+| Feature | NAT Mode | Host Mode | None Mode | Gateway Mode | Macvlan Mode |
+|---|---|---|---|---|---|
+| Who assigns IPs? | Droidspaces DHCP | Android (shared) | Nobody (loopback only) | OpenWRT dnsmasq | The LAN's DHCP server (your router) |
+| Who does NAT? | Droidspaces iptables | Android | N/A | OpenWRT (via Droidspaces NAT on OpenWRT's WAN) | Your router, as for any LAN device |
+| Who manages firewall? | Droidspaces | Android | N/A | OpenWRT | The container itself |
+| Who manages DNS? | Droidspaces | Android | Nobody | OpenWRT dnsmasq | The LAN's DHCP server |
+| Container isolated from host network? | Yes | No | Yes | Yes | Yes (the phone cannot even reach it over that NIC) |
+| Internet access? | Yes | Yes | No | Yes (via gateway container) | Yes (via the LAN's router) |
+| IPv6? | Yes, with NAT66 (needs kernel support) | Whatever Android has | Loopback only | Yes, once OpenWRT is set up for it (see Part 10) | Whatever the LAN advertises |
+| Needs a second container to function? | No | No | No | Yes (the gateway container) | No, but a wired NIC and `CONFIG_MACVLAN` |
+| Good for | Simple internet access | Maximum performance, no veth or bridge in the path | Offline / sandboxed workloads | Router appliance, VPN gateway, segmented LANs | A real LAN address, OpenWRT on a physical LAN |
 
 ---
 

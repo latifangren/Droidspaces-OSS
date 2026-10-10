@@ -113,7 +113,7 @@ sudo droidspaces --name=web,db,app stop
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--net=MODE` | | Networking mode: `nat` (default), `host`, `none`, or `gateway`. |
+| `--net=MODE` | | Networking mode: `nat` (default), `host`, `none`, `gateway`, or `macvlan`. |
 | `--upstream=IFACE` | | Pin the NAT WAN to specific interface(s). Turns off automatic uplink detection. Comma-separated, priority-ordered, supports wildcards. Example: `--upstream=wlan0,rmnet*`. NAT mode only. |
 | `--port HOST:CONT[/proto]` | | Forward a host port to the container (NAT mode). TCP and UDP. |
 | `--dns=SERVERS` | `-d` | Custom DNS servers, comma-separated. Example: `--dns=1.1.1.1,8.8.8.8` |
@@ -129,6 +129,15 @@ Hand a container's LAN to another running container (for example OpenWRT), which
 | `--gateway-net=NAME` | | LAN segment name / host bridge suffix (default: `lan`). Clients sharing a value share a LAN; different values are isolated segments. |
 | `--gateway-iface=IFACE` | | Interface name as seen *inside* the gateway container (default: `eth1`). Each segment needs a unique name. |
 | `--gateway-bridge=BR` | | Override the host bridge name (default: `ds-{gateway-net}`). |
+
+#### Macvlan mode
+
+Put a container straight onto a wired LAN through a host NIC, usually a USB Ethernet adapter. It gets its own MAC address on that LAN and its address from the LAN's DHCP server, with no NAT. Needs `CONFIG_MACVLAN` (see the [Kernel configuration guide](Kernel-Configuration.md)). See [Features](Features.md#5-macvlan-mode---netmacvlan) for what it can and cannot do.
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--macvlan-parent=IF` | | **Required** for `--net=macvlan`. The host NIC to attach to, for example `eth0`. |
+| `--macvlan-mode=MODE` | | `bridge` (default), `private`, `vepa` or `passthru`. In `bridge` mode containers on the same NIC reach each other directly. |
 
 ### Feature flags
 
@@ -303,6 +312,14 @@ sudo droidspaces --name=openwrt --rootfs=/data/openwrt --net=nat start
 
 # 2. a client whose LAN/DHCP/firewall is owned by openwrt
 sudo droidspaces --name=kali --rootfs=/data/kali --net=gateway --gateway=openwrt start
+```
+
+### Macvlan mode (a real address on a wired LAN)
+
+```bash
+# eth0 is the USB Ethernet adapter on the host; the container gets its own
+# MAC and asks the LAN's router for an address
+sudo droidspaces --name=ubuntu --rootfs=/data/ubuntu --net=macvlan --macvlan-parent=eth0 start
 ```
 
 ### Ephemeral testing
