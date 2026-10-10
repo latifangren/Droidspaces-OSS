@@ -1682,8 +1682,11 @@ void ds_net_gateway_teardown(const char *gateway_name) {
   if (!d)
     return;
 
-  /* De-dupe segments: many clients can share one --gateway-net (one bridge). */
-  char seen[32][IFNAMSIZ];
+  /* De-dupe segments: many clients share one. The key is the cable and the
+   * bridge together, because --gateway-bridge can pull them apart: two
+   * segments forced onto one bridge still have a cable each, and one segment
+   * whose clients name different bridges still has every bridge to reap. */
+  char seen[32][2][IFNAMSIZ];
   int seen_count = 0;
 
   struct dirent *ent;
@@ -1707,7 +1710,7 @@ void ds_net_gateway_teardown(const char *gateway_name) {
 
     int dup = 0;
     for (int i = 0; i < seen_count; i++)
-      if (strcmp(seen[i], bridge) == 0) {
+      if (strcmp(seen[i][0], gw_host) == 0 && strcmp(seen[i][1], bridge) == 0) {
         dup = 1;
         break;
       }
@@ -1715,8 +1718,10 @@ void ds_net_gateway_teardown(const char *gateway_name) {
       ds_config_free(&c);
       continue;
     }
-    if (seen_count < (int)(sizeof(seen) / sizeof(seen[0])))
-      safe_strncpy(seen[seen_count++], bridge, IFNAMSIZ);
+    if (seen_count < (int)(sizeof(seen) / sizeof(seen[0]))) {
+      safe_strncpy(seen[seen_count][0], gw_host, IFNAMSIZ);
+      safe_strncpy(seen[seen_count++][1], bridge, IFNAMSIZ);
+    }
 
     ds_nl_ctx_t *ctx = ds_nl_open();
     if (!ctx) {
