@@ -278,7 +278,7 @@ fun ContainerConfigForm(
                 Text(
                     text = context.getString(R.string.static_ip_description),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.secondary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
 
@@ -373,7 +373,7 @@ fun ContainerConfigForm(
                 Text(
                     text = context.getString(R.string.upstream_interface_hint),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
                 UpstreamInterfaceList(
                     upstreamInterfaces = state.upstreamInterfaces,
