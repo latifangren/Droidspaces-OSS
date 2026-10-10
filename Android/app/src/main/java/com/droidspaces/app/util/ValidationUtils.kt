@@ -206,6 +206,47 @@ object ValidationUtils {
 
         return GatewayErrors(containerErr, netErr, ifaceErr, bridgeErr)
     }
+
+    /**
+     * Validates a macvlan-mode configuration. The parent is required. Sharing it
+     * with another macvlan container is only a warning when either side is in
+     * passthru mode: the two cannot run at the same time, but taking turns is
+     * fine, and the backend refuses the second one with the reason if they try.
+     */
+    fun validateMacvlanConfig(
+        selfName: String,
+        netMode: String,
+        parent: String,
+        mode: String,
+        installed: List<ContainerInfo>,
+        context: Context? = null
+    ): MacvlanErrors {
+        if (netMode != "macvlan") return MacvlanErrors()
+        if (parent.isBlank()) {
+            return MacvlanErrors(
+                parent = context?.getString(R.string.error_macvlan_parent_required) ?: "Choose the host interface"
+            )
+        }
+        val clash = installed.firstOrNull {
+            it.name != selfName && it.netMode == "macvlan" && it.macvlanParent == parent &&
+                (it.macvlanMode == "passthru" || mode == "passthru")
+        }
+        return MacvlanErrors(
+            warning = clash?.let {
+                context?.getString(R.string.warning_macvlan_passthru_shared, parent, it.name)
+                    ?: "$parent is also used by '${it.name}'. In passthru mode only one of them can run at a time."
+            }
+        )
+    }
+}
+
+/** Macvlan-mode validation. [parent] blocks saving; [warning] does not. */
+data class MacvlanErrors(
+    val parent: String? = null,
+    val warning: String? = null
+) {
+    val isValid: Boolean
+        get() = parent == null
 }
 
 /**

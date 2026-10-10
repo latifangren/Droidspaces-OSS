@@ -59,6 +59,15 @@ fun ContainerConfigScreen(
     val context = LocalContext.current
     var state by remember { mutableStateOf(initialState) }
 
+    val macvlanErrors = ValidationUtils.validateMacvlanConfig(
+        selfName = containerName,
+        netMode = state.netMode,
+        parent = state.macvlanParent,
+        mode = state.macvlanMode,
+        installed = installedContainers,
+        context = context
+    )
+
     val gatewayErrors = ValidationUtils.validateGatewayConfig(
         selfName = containerName,
         gatewayContainer = state.gatewayContainer,
@@ -74,7 +83,8 @@ fun ContainerConfigScreen(
         else installedContainers.find { it.name != containerName && it.staticNatIp == state.staticNatIp }
     }
 
-    val canProceed = (state.netMode != "gateway" || gatewayErrors.isValid) && collisionContainer == null &&
+    val canProceed = (state.netMode != "gateway" || gatewayErrors.isValid) &&
+        macvlanErrors.isValid && collisionContainer == null &&
         ResourceLimits.isValidPidsLimit(state.pidsLimit)
 
     Scaffold(
@@ -109,6 +119,7 @@ fun ContainerConfigScreen(
                 installedContainers = installedContainers,
                 selfName = containerName,
                 gatewayErrors = gatewayErrors,
+                macvlanErrors = macvlanErrors,
                 collisionContainer = collisionContainer,
                 modifier = Modifier.fillMaxSize(),
                 leadingContent = {

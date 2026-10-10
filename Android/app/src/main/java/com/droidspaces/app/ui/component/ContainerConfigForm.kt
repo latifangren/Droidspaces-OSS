@@ -86,6 +86,7 @@ import com.droidspaces.app.util.Constants
 import com.droidspaces.app.util.ContainerConfigState
 import com.droidspaces.app.util.ContainerInfo
 import com.droidspaces.app.util.GatewayErrors
+import com.droidspaces.app.util.MacvlanErrors
 import com.droidspaces.app.util.ResourceLimits
 import com.droidspaces.app.util.ValidationUtils
 import com.droidspaces.app.util.HostCapabilities
@@ -98,7 +99,7 @@ import androidx.compose.runtime.collectAsState
  *
  * State is fully hoisted: the caller owns a [ContainerConfigState] and receives
  * every edit via [onStateChange]. Transient UI (dialog visibility, NAT octet
- * text) stays local. [gatewayErrors]/[collisionContainer] are computed by the
+ * text) stays local. [gatewayErrors]/[macvlanErrors]/[collisionContainer] are computed by the
  * caller (which also needs them to gate its action button) and passed in for
  * display. [leadingContent] renders caller-specific header rows (e.g. the Edit
  * screen's hostname field) at the top of the scrolling column.
@@ -111,6 +112,7 @@ fun ContainerConfigForm(
     installedContainers: List<ContainerInfo>,
     selfName: String,
     gatewayErrors: GatewayErrors,
+    macvlanErrors: MacvlanErrors,
     collisionContainer: ContainerInfo?,
     modifier: Modifier = Modifier,
     leadingContent: @Composable ColumnScope.() -> Unit = {},
@@ -240,7 +242,7 @@ fun ContainerConfigForm(
             label = context.getString(R.string.network_mode),
             selected = state.netMode,
             options = caps?.supportedNetModes() ?: HostCapabilities.ALL_NET_MODES,
-            displayName = { context.getString(when (it) { "nat" -> R.string.network_mode_nat; "none" -> R.string.network_mode_none; "gateway" -> R.string.network_mode_gateway; else -> R.string.network_mode_host }) },
+            displayName = { context.getString(when (it) { "nat" -> R.string.network_mode_nat; "none" -> R.string.network_mode_none; "gateway" -> R.string.network_mode_gateway; "macvlan" -> R.string.network_mode_macvlan; else -> R.string.network_mode_host }) },
             onSelect = { mode ->
                 clearFocus()
                 onStateChange(state.copy(netMode = mode))
@@ -261,6 +263,12 @@ fun ContainerConfigForm(
             installedContainers = installedContainers,
             errors = gatewayErrors
         )
+
+        if (state.netMode == "macvlan") {
+            MacvlanSettingsSection(parent = state.macvlanParent, mode = state.macvlanMode, errors = macvlanErrors) { parent, mode ->
+                onStateChange(state.copy(macvlanParent = parent, macvlanMode = mode))
+            }
+        }
 
         if (state.netMode == "nat") {
             Column(

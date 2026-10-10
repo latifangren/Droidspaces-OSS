@@ -26,11 +26,16 @@ data class HostCapabilities(
 
     private val natSupported get() = has("net_ns") && has("veth")
 
-    /** NAT needs a network namespace and veth, gateway additionally a bridge. */
+    /**
+     * NAT needs a network namespace and veth, gateway additionally a bridge.
+     * Macvlan must be reported outright: a backend too old to know the key
+     * would read net_mode=macvlan as unknown and fall back to NAT.
+     */
     fun supportedNetModes(): List<String> = ALL_NET_MODES.filter {
         when (it) {
             "nat" -> natSupported
             "gateway" -> natSupported && has("bridge")
+            "macvlan" -> has("net_ns") && flags["macvlan"] == true
             else -> true
         }
     }
@@ -54,7 +59,7 @@ data class HostCapabilities(
 
     companion object {
         private const val TAG = "HostCapabilities"
-        val ALL_NET_MODES = listOf("nat", "host", "none", "gateway")
+        val ALL_NET_MODES = listOf("nat", "host", "none", "gateway", "macvlan")
 
         private val _state = MutableStateFlow<HostCapabilities?>(null)
 

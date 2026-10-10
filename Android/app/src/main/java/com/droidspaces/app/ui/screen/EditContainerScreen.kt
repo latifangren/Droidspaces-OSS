@@ -100,6 +100,15 @@ fun EditContainerScreen(
         ).errorMessage
     }
 
+    val macvlanErrors = ValidationUtils.validateMacvlanConfig(
+        selfName = container.name,
+        netMode = state.netMode,
+        parent = state.macvlanParent,
+        mode = state.macvlanMode,
+        installed = containerViewModel.containerList,
+        context = context
+    )
+
     val gatewayErrors = ValidationUtils.validateGatewayConfig(
         selfName = container.name,
         gatewayContainer = state.gatewayContainer,
@@ -191,7 +200,8 @@ fun EditContainerScreen(
         },
         bottomBar = {
             val isReadyToSave = !isSaving && !isSaved && hasChanges && hostnameError == null &&
-                (state.netMode != "gateway" || gatewayErrors.isValid) && collisionContainer == null &&
+                (state.netMode != "gateway" || gatewayErrors.isValid) &&
+                macvlanErrors.isValid && collisionContainer == null &&
                 ResourceLimits.isValidPidsLimit(state.pidsLimit)
             SaveActionBottomBar(
                 isSaved = isSaved,
@@ -216,6 +226,7 @@ fun EditContainerScreen(
                 installedContainers = containerViewModel.containerList,
                 selfName = container.name,
                 gatewayErrors = gatewayErrors,
+                macvlanErrors = macvlanErrors,
                 collisionContainer = collisionContainer,
                 modifier = Modifier.fillMaxSize(),
                 leadingContent = {

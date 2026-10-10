@@ -58,6 +58,8 @@ data class ContainerInfo(
     val gatewayNet: String = "",
     val gatewayIface: String = "",
     val gatewayBridge: String = "",
+    val macvlanParent: String = "",
+    val macvlanMode: String = "",
     val privileged: String = "",
     val customInit: String = "",
     /** Bytes, cpu_quota microseconds per [ResourceLimits.CPU_PERIOD_US], process count. 0 is unlimited. */
@@ -119,6 +121,11 @@ data class ContainerInfo(
             if (gatewayNet.isNotBlank()) appendLine("gateway_net=$gatewayNet")
             if (gatewayIface.isNotBlank()) appendLine("gateway_lan_ifname=$gatewayIface")
             if (gatewayBridge.isNotBlank()) appendLine("gateway_bridge=$gatewayBridge")
+        }
+        // Bridge is the runtime's default, so only the other modes are written.
+        if (netMode == "macvlan") {
+            if (macvlanParent.isNotBlank()) appendLine("macvlan_parent=$macvlanParent")
+            if (macvlanMode.isNotBlank() && macvlanMode != "bridge") appendLine("macvlan_mode=$macvlanMode")
         }
         appendLine("use_sparse_image=${if (useSparseImage) "1" else "0"}")
         if (sparseImageSizeGB != null) {
@@ -421,6 +428,8 @@ object ContainerManager {
                 gatewayNet = configMap["gateway_net"] ?: "",
                 gatewayIface = configMap["gateway_lan_ifname"] ?: "",
                 gatewayBridge = configMap["gateway_bridge"] ?: "",
+                macvlanParent = configMap["macvlan_parent"] ?: "",
+                macvlanMode = configMap["macvlan_mode"] ?: "",
                 privileged = configMap["privileged"] ?: "",
                 customInit = configMap["custom_init"] ?: "",
                 memoryLimit = configMap["memory_limit"]?.toLongOrNull() ?: 0,
@@ -527,6 +536,27 @@ object ContainerManager {
             emptyList()
         }
     }
+
+    /**
+     * Host interfaces a macvlan can sit on: Ethernet-type links (type 1), minus
+     * our own, dummies and tunnels. Wi-Fi is listed too; whether a given access
+     * point carries a second MAC is for the user to find out.
+     */
+    suspend fun listEthernetInterfaces(): List<String> = withContext(Dispatchers.IO) {
+        try {
+            // One grep over every type file: a cat per interface cost about a second
+            // on a phone with 45 of them, most of them rmnet.
+            val busybox = Constants.BUSYBOX_BINARY_PATH
+            val result = Shell.cmd("$busybox grep -l '^1$' /sys/class/net/*/type; true").exec()
+            result.out.mapNotNull { it.trim().removePrefix("/sys/class/net/").removeSuffix("/type").takeIf(String::isNotEmpty) }
+                .filterNot { n -> ETHERNET_SKIP.any { n.startsWith(it) } }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    /** Ours, dummies and tunnels: type 1 links a macvlan cannot usefully sit on. */
+    private val ETHERNET_SKIP = listOf("ds-", "dummy", "ifb", "gretap", "erspan", "p2p")
 
     /**
      * Update container configuration.

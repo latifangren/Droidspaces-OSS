@@ -165,7 +165,7 @@ fun ContainerCard(
             // Info Rows
             val displayHostname = container.hostname.takeIf { it.isNotEmpty() } ?: container.name
             val hasSparseImage = container.useSparseImage && container.sparseImageSizeGB != null
-            val netModeLabel = when (container.netMode) { "nat" -> context.getString(R.string.network_mode_nat_short); "none" -> context.getString(R.string.network_mode_none_short); "gateway" -> context.getString(R.string.network_mode_gateway_short); else -> context.getString(R.string.network_mode_host_short) }
+            val netModeLabel = when (container.netMode) { "nat" -> context.getString(R.string.network_mode_nat_short); "none" -> context.getString(R.string.network_mode_none_short); "gateway" -> context.getString(R.string.network_mode_gateway_short); "macvlan" -> context.getString(R.string.network_mode_macvlan_short); else -> context.getString(R.string.network_mode_host_short) }
             // Identity first, then what the container is given: disk, memory, CPU, processes.
             val info = buildList {
                 add(rememberVectorPainter(Icons.Default.Computer) to displayHostname)

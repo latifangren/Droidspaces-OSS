@@ -285,6 +285,28 @@
     <string name="network_mode_none_short">None</string>
     <string name="network_mode_gateway">Gateway (Virtual Router)</string>
     <string name="network_mode_gateway_short">Gateway</string>
+    <string name="network_mode_macvlan">Macvlan (Wired LAN)</string>
+    <string name="network_mode_macvlan_short">Macvlan</string>
+
+    <!-- Macvlan networking mode -->
+    <string name="macvlan_settings">Macvlan Settings</string>
+    <string name="macvlan_settings_description">Put the container straight on the LAN of a wired host interface, usually a USB Ethernet adapter. It gets its own MAC address and its IP from that LAN\'s router. Wi-Fi rarely works, mobile data never does, and the phone itself cannot reach the container over that interface.</string>
+    <string name="macvlan_parent">Host Interface</string>
+    <string name="macvlan_parent_choose">Choose Host Interface</string>
+    <string name="macvlan_parent_hint">The wired interface the container\'s eth0 sits on, usually the USB Ethernet adapter. One interface, by its exact name.</string>
+    <string name="macvlan_enter_manually">Or enter its name manually:</string>
+    <string name="macvlan_interface_name_hint">Interface Name (e.g. eth0)</string>
+    <string name="error_macvlan_parent_required">Choose the host interface</string>
+    <string name="warning_macvlan_passthru_shared">%1$s is also used by \'%2$s\'. In passthru mode only one of them can run at a time.</string>
+    <string name="macvlan_mode">Macvlan Mode</string>
+    <string name="macvlan_mode_bridge_desc">Containers on this interface reach each other directly.</string>
+    <string name="macvlan_mode_private_desc">Containers on this interface cannot reach each other, only the LAN.</string>
+    <string name="macvlan_mode_vepa_desc">Traffic between containers goes out to the LAN switch and back, so it needs a switch with hairpin support.</string>
+    <string name="macvlan_mode_passthru_desc">The whole interface goes to this one container, and the phone loses network on it.</string>
+    <string name="macvlan_mode_bridge">Bridge (Default)</string>
+    <string name="macvlan_mode_private">Private</string>
+    <string name="macvlan_mode_vepa">VEPA</string>
+    <string name="macvlan_mode_passthru">Passthru</string>
 
     <!-- Gateway networking mode -->
     <string name="gateway_settings">Gateway Settings</string>
