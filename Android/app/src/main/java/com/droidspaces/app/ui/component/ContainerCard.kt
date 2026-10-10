@@ -14,6 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -137,7 +138,7 @@ fun ContainerCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     IconButton(onClick = onShowLogs) {
-                        Icon(Icons.Default.Terminal, context.getString(R.string.view_logs), tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                        Icon(Icons.AutoMirrored.Filled.Article, context.getString(R.string.view_logs), tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                     }
 
                     val (statusText, statusColor) = when (container.status) {
