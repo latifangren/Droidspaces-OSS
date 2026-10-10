@@ -5,9 +5,12 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -42,8 +45,9 @@ import com.droidspaces.app.ui.util.rememberClearFocus
  * Pass [scrollableContent] = false when the body is a LazyColumn, which cannot
  * live inside a scrolling parent: give the list `Modifier.weight(1f)` instead,
  * the body is already bounded. [modifier] is for what is genuinely per-dialog,
- * `imePadding()`, a `fillMaxHeight` fraction, or a `heightIn` cap. Never pass
- * `wrapContentHeight()`, the shell already wraps. [borderColor] outlines
+ * a `fillMaxHeight` fraction or a `heightIn` cap. The shell handles the keyboard
+ * itself, so no `imePadding()`. Never pass `wrapContentHeight()`, the shell
+ * already wraps. [borderColor] outlines
  * destructive dialogs in error.
  */
 @Composable
@@ -57,7 +61,17 @@ fun DsDialog(
 ) {
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        // With the default decorFitsSystemWindows the dialog window pans itself to keep the
+        // focused field above the keyboard and Compose never sees the IME inset, so the
+        // footer slid under the keyboard and a caller's imePadding() was always zero.
+        // Taking the insets here lets the shell shrink above the keyboard instead, and the
+        // footer, which is measured first, stays on screen. Only the keyboard's inset: the
+        // bars' insets drop to zero while the window closes, and padding for them made the
+        // dialog jump on every dismiss. The height bound below already keeps it off both bars.
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false
+        )
     ) {
         // The activity handles configChanges itself, so a dialog that is open
         // through a rotation keeps its stale window constraints and a bound
@@ -69,6 +83,7 @@ fun DsDialog(
         val clearFocus = rememberClearFocus()
         Surface(
             modifier = Modifier
+                .windowInsetsPadding(WindowInsets.ime)
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp, vertical = 24.dp)
                 .heightIn(max = screenHeight - 48.dp)

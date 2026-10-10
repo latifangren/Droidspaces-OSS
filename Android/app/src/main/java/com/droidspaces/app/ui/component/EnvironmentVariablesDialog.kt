@@ -36,7 +36,7 @@ fun EnvironmentVariablesDialog(
 
     DsDialog(
         onDismiss = onDismiss,
-        modifier = Modifier.fillMaxHeight(0.78f).imePadding(),
+        modifier = Modifier.fillMaxHeight(0.78f),
         scrollableContent = false,
         footer = {
             DialogFooterRow(

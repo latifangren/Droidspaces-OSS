@@ -210,7 +210,6 @@ private fun LineCountSelector(
         val parsed = value.toIntOrNull()
         DsDialog(
             onDismiss = { showCustomDialog = false },
-            modifier = Modifier.imePadding(),
             footer = {
                 DialogFooterRow(
                     dismissLabel = context.getString(R.string.cancel),

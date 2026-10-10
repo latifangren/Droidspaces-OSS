@@ -716,7 +716,6 @@ private fun RepoManagerDialog(
 
     DsDialog(
         onDismiss = onDismiss,
-        modifier = Modifier.imePadding(),
         scrollableContent = false,
         footer = {
             DialogFooterRow(

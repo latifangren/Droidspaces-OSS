@@ -504,7 +504,6 @@ private fun SparseSizeDialog(
 
     DsDialog(
         onDismiss = onDismiss,
-        modifier = Modifier.imePadding(),
         footer = {
             DialogFooterRow(
                 dismissLabel = context.getString(R.string.cancel),
