@@ -3,6 +3,7 @@ package com.droidspaces.app.ui.component
 import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MotionScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,6 +35,9 @@ fun DsMenuTheme(content: @Composable () -> Unit) {
             surfaceTint = Color.Transparent
         ),
         shapes = MaterialTheme.shapes.copy(extraSmall = RoundedCornerShape(20.dp)),
+        // The app theme is Expressive for the installer's shape morphs, and menus inherit
+        // its spring and overshoot on open. Menus keep the standard motion.
+        motionScheme = MotionScheme.standard(),
         content = content
     )
 }
