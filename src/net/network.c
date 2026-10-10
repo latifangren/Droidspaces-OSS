@@ -1592,10 +1592,15 @@ int ds_net_gateway_reconcile(struct ds_config *cfg, pid_t client_pid) {
   if (!cfg || client_pid <= 0)
     return 0;
 
-  char app_host[IFNAMSIZ];
+  /* The host end alone proves nothing: it is named after the container, so a
+   * cable left over from an earlier boot whose namespace something kept alive
+   * looks the same. Only an eth0 in our current namespace means wired. */
+  char app_host[IFNAMSIZ], netns[PATH_MAX];
   veth_host_name(cfg, client_pid, app_host, sizeof(app_host));
+  snprintf(netns, sizeof(netns), "/proc/%d/ns/net", (int)client_pid);
   ds_nl_ctx_t *ctx = ds_nl_open();
-  int wired = ctx && ds_nl_link_exists(ctx, app_host);
+  int wired =
+      ctx && ds_nl_link_exists(ctx, app_host) && netns_has_link(netns, "eth0");
   if (ctx)
     ds_nl_close(ctx);
   if (wired)
