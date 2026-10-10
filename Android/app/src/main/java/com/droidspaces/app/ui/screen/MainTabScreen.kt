@@ -43,6 +43,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.compose.ui.unit.sp
 import com.droidspaces.app.R
+import com.droidspaces.app.ui.theme.DsIcons
 import com.droidspaces.app.util.HostCapabilities
 import androidx.compose.runtime.collectAsState
 import com.droidspaces.app.util.Constants
@@ -51,7 +52,7 @@ private const val EASTER_EGG_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 
 enum class TabItem(val titleResId: Int, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
     Home(R.string.home_title, Icons.Default.Home),
-    Containers(R.string.containers, Icons.Default.Storage),
+    Containers(R.string.containers, DsIcons.Logo),
     ControlPanel(R.string.panel, Icons.Default.Dashboard)
 }
 
@@ -274,7 +275,7 @@ fun MainTabScreen(
                         ) { expandedContainerName = null }
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Storage,
+                            imageVector = DsIcons.Logo,
                             contentDescription = null,
                             modifier = Modifier
                                 .padding(end = 8.dp)

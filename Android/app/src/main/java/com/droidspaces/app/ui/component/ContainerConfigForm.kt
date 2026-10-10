@@ -55,6 +55,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.droidspaces.app.R
+import com.droidspaces.app.ui.theme.DsIcons
 import com.droidspaces.app.ui.theme.JetBrainsMono
 import com.droidspaces.app.ui.util.FocusUtils
 import com.droidspaces.app.ui.util.rememberClearFocus
@@ -166,7 +167,7 @@ fun ContainerConfigForm(
     GroupHeader(context.getString(R.string.cat_integration))
     SettingsGroup {
         SwitchItem(
-            icon = Icons.Default.Storage,
+            icon = DsIcons.Logo,
             title = context.getString(R.string.android_storage),
             summary = context.getString(R.string.android_storage_description),
             checked = state.enableAndroidStorage,

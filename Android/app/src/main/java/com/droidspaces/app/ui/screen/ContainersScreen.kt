@@ -75,6 +75,7 @@ import com.droidspaces.app.ui.viewmodel.SparseOperation
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.clip
 import com.droidspaces.app.R
+import com.droidspaces.app.ui.theme.DsIcons
 import androidx.compose.ui.window.Dialog
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -177,7 +178,7 @@ fun ContainersScreen(
                     }
                 } else {
                     EmptyState(
-                        icon = Icons.Default.Storage,
+                        icon = DsIcons.Logo,
                         title = context.getString(R.string.no_containers_installed),
                         description = context.getString(R.string.install_container_description),
                         // Reserve the floating tab bar's space so the centered

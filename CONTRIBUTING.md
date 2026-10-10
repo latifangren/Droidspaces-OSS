@@ -338,6 +338,7 @@ the language and about dialogs in `ui/screen/SettingsScreen.kt`). Do not import 
 | `MaterialTheme.colorScheme.*` | | All colors. `ui/theme/Color.kt` holds `AMOLED_BLACK`, the palettes, the warning pair and `ColorScheme.isDark` |
 | `ColorScheme.isDark`, `warningContainer`, `onWarningContainer` | `ui/theme/Color.kt` | Dark-mode branches and the amber warning pair. Never re-derive from `luminance()` |
 | `MaterialTheme.typography.*`, `JetBrainsMono` | `ui/theme/Type.kt` | All text styles, and the mono font for terminal, log, and code text |
+| `DsIcons.Logo` | `ui/theme/DsIcons.kt` | The app mark as a tintable icon, wherever the UI means a container or its storage. Never `Icons.Default.Storage` |
 | Corner radii, spacing, type roles | [DESIGN.md](./DESIGN.md) | Every visual value. There is no shape token object, the numbers live in DESIGN.md |
 | `AnimationUtils` | `util/AnimationUtils.kt` | Durations, easing, and tween specs. Never a literal `tween(300)` |
 | `AccentColorPicker`, `ColorPaletteSwatch` | `ui/component/` | The palette picker in settings |

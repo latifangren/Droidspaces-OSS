@@ -1,16 +1,15 @@
 package com.droidspaces.app.util
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Storage
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.res.painterResource
 import com.droidspaces.app.R
+import com.droidspaces.app.ui.theme.DsIcons
 
 object IconUtils {
 
-    // Returns drawable res ID for a distro name, or null for fallback (Storage icon).
+    // Returns drawable res ID for a distro name, or null for the DsIcons.Logo fallback.
     // Safe to call from any thread, no Compose context needed.
     fun getDistroIconRes(name: String?): Int? {
         val s = name ?: return null
@@ -47,6 +46,6 @@ object IconUtils {
     fun getDistroIcon(name: String?): Painter {
         val res = getDistroIconRes(name)
         return if (res != null) painterResource(id = res)
-        else rememberVectorPainter(image = Icons.Default.Storage)
+        else rememberVectorPainter(image = DsIcons.Logo)
     }
 }
