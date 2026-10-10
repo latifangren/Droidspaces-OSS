@@ -5,8 +5,9 @@
  * veth pair management, and network cleanup.
  *
  * All link/addr/route management uses the pure-C RTNETLINK API
- * (ds_netlink.c). All iptables management uses the raw socket API
- * (ds_iptables.c). No external binary dependencies for core networking.
+ * (netlink.c). iptables rules go through the raw socket API (iptables.c),
+ * which falls back to the iptables binary only where the kernel refuses it
+ * and for port forwards.
  *
  * Copyright (C) 2026 ravindu644 <droidcasts@protonmail.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
@@ -1188,13 +1189,10 @@ int setup_veth_host_side(struct ds_config *cfg, pid_t child_pid) {
    * means every reboot the container gets the same address - no PREROUTING
    * rule churn, no "wrong IP" on the first DHCP renew.
    *
-   * Binding interface depends on topology:
-   *   Bridge mode    - bind to ds-br0.  veth_host is a bridge slave; the
-   *                    kernel delivers frames from the container upward to
-   *                    the bridge interface, not the slave.  A socket bound
-   *                    to the slave would never see the DHCP DISCOVERs.
-   *   Bridgeless mode - bind to veth_host directly (point-to-point veth,
-   *                    no bridge in the path). */
+   * The server binds to veth_host in both topologies. A packet socket on a
+   * bridge port still sees the container's frames, because packet taps run
+   * before the bridge takes the frame, and only this container's port is
+   * this container's. */
   {
     struct in_addr offer_in;
     uint32_t offer_ip = 0;
@@ -1206,9 +1204,9 @@ int setup_veth_host_side(struct ds_config *cfg, pid_t child_pid) {
               cfg->static_nat_ip);
     }
 
-    /* Bind to veth_host. In bridge mode the kernel also floods L2 broadcasts
-     * to sibling veth ports; isolation is enforced by peer_mac filter in
-     * the DHCP server loop, not by the socket bind alone. */
+    /* In bridge mode the kernel also floods sibling containers' broadcasts
+     * out of this port. The DHCP loop drops those by ingress ifindex and
+     * packet type, see dhcp.c. */
     const char *dhcp_iface = veth_host;
     ds_dhcp_server_start(cfg, dhcp_iface, offer_ip, inet_addr(DS_NAT_GW_IP),
                          nat6 ? &ra_prefix : NULL);
@@ -2313,8 +2311,7 @@ static void *route_monitor_loop(void *arg) {
   while (!g_stop_monitor) {
     /* Enforce IPv4 forwarding in real-time. If ip_forward ever flips to 0
      * the NAT'd container loses all WAN traffic, so re-assert it on every
-     * cycle regardless of platform - Android's netd is the usual culprit,
-     * but a desktop firewall/sysctl reload or another tool can clear it too.
+     * cycle. Android's netd is the culprit, and this thread only runs there.
      * The kernel does not broadcast POLLERR/inotify events for /proc/sys/
      * memory variables, so we must poll; reading a 1-byte procfs flag takes
      * < 1 microsecond, costing 0% CPU. */

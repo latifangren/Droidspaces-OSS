@@ -16,7 +16,7 @@
  *   • Uses getsockopt/setsockopt on an AF_INET or AF_INET6 SOCK_RAW socket
  *   • The raw socket is always tried first. The iptables(8) / ip6tables(8)
  *     binary is the fallback for whatever the kernel rejects, and the only
- *     path for the MSS clamp and port forwards.
+ *     path for port forwards.
  *
  * Copyright (C) 2026 ravindu644 <droidcasts@protonmail.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
@@ -1352,8 +1352,9 @@ static int ensure_iface_accept(const struct xt_family *f, int fd,
  *   -t filter -I FORWARD -i <iface> -j ACCEPT
  *   -t filter -I FORWARD -o <iface> -j ACCEPT
  *
- * Called with DS_NAT_BRIDGE ("ds-br0") when bridge-nf-call-iptables=1 so
- * the FORWARD hook sees the bridge interface name as the ingress/egress. */
+ * Called with DS_NAT_BRIDGE ("ds-br0"), or with the veth in bridgeless mode.
+ * Routed traffic enters and leaves through the bridge device, so that is the
+ * name FORWARD sees; bridge netfilter is off and never shows it the ports. */
 
 int ds_ipt_ensure_forward_accept(int family, const char *iface) {
   const struct xt_family *f = xt_family_of(family);

@@ -7,7 +7,7 @@
  * the container's veth_host interface via SO_BINDTODEVICE + sll_ifindex so it
  * never interferes with sibling containers sharing the same bridge.
  *
- * Serves a single static lease (the deterministic IP from veth_peer_ip()) in
+ * Serves a single static lease (the container's persisted static_nat_ip) in
  * response to DHCPDISCOVER and DHCPREQUEST. Handles lease renewals for the
  * full container lifetime.
  *
