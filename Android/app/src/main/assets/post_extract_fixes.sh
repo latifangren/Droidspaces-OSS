@@ -535,11 +535,11 @@ fi
 
 # --- 4. dhcpcd Fixes (any init) ---
 
-# Replace dhcpcd init script to only start in NAT or gateway network mode
+# Replace dhcpcd init script to stay out of host and none network modes
 # This is the OpenRC equivalent of systemd's ExecCondition - if the container
 # is running in host network mode, dhcpcd is cleanly skipped at boot to prevent
-# cellular network breakage and kernel panics on Android interfaces. Gateway
-# mode needs it too: the DHCP lease comes from the gateway container.
+# cellular network breakage and kernel panics on Android interfaces. Every
+# other mode gets its lease through eth0.
 if $TEST -f "$ROOTFS_PATH/etc/init.d/dhcpcd"; then
     log "Alpine/OpenRC dhcpcd service detected, applying network mode guard..."
     $CAT > "$ROOTFS_PATH/etc/init.d/dhcpcd" << 'INITEOF'
